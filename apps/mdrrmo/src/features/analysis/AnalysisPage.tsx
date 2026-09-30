@@ -14,6 +14,7 @@ import { useApiQuery } from '@beacon/auth';
 import {
   ApiError,
   NETWORK_ERROR_MESSAGE,
+  type IncidentAnalysis,
   type PatternAnalysis,
   type PatternFindingKind,
   type TrendDirection,
@@ -31,6 +32,7 @@ import {
 } from '@beacon/ui';
 import { DemoToggle, useReportFilters, type ReportFilterState } from '../reports/ReportFilters';
 import { HISTORY_FILTER_KEYS, HistoryFilterFields } from '../history/HistoryFilters';
+import { PatternCharts } from './PatternCharts';
 
 export const ANALYSIS_DISCLAIMER =
   'This analysis identifies recurring patterns in recorded disaster reports. It does not ' +
@@ -77,6 +79,7 @@ export function AnalysisPage() {
     `/staff/analysis/patterns?${filters.apiQuery(QUERY_KEYS)}`,
   );
   const data = query.data;
+  const view = filters.params.get('view') === 'charts' ? 'charts' : 'findings';
 
   return (
     <div className="bcn-stack">
@@ -88,6 +91,23 @@ export function AnalysisPage() {
         <span>{ANALYSIS_DISCLAIMER}</span> For counts by hazard, barangay and time, see{' '}
         <Link to="/history">Historical Reports</Link>.
       </Alert>
+
+      <div className="m-segmented" role="group" aria-label="Show">
+        <button
+          type="button"
+          aria-pressed={view === 'findings'}
+          onClick={() => filters.update({ view: null })}
+        >
+          Findings and tables
+        </button>
+        <button
+          type="button"
+          aria-pressed={view === 'charts'}
+          onClick={() => filters.update({ view: 'charts' })}
+        >
+          Charts and map
+        </button>
+      </div>
 
       <Card className="m-filters">
         <HistoryFilterFields filters={filters} />
@@ -130,11 +150,23 @@ export function AnalysisPage() {
           />
         </Card>
       ) : (
-        <PatternResults data={data} />
+        <div className="bcn-stack" data-refetching={query.loading || undefined}>
+          {view === 'charts' ? (
+            <ChartsView data={data} query={filters.apiQuery(HISTORY_FILTER_KEYS)} />
+          ) : (
+            <PatternResults data={data} />
+          )}
+        </div>
       )}
       <MethodsCard />
     </div>
   );
+}
+
+/** The 4.3 visualizations; also loads the 4.1 counts for the barangay heatmap. */
+function ChartsView({ data, query }: { data: PatternAnalysis; query: URLSearchParams }) {
+  const incidents = useApiQuery<IncidentAnalysis>(`/staff/analysis/incidents?${query}`);
+  return <PatternCharts data={data} incidents={incidents.data} />;
 }
 
 function MethodSettings({ filters }: { filters: ReportFilterState }) {

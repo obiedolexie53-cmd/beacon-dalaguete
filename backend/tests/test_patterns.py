@@ -89,6 +89,9 @@ def test_trends() -> None:
     assert overall.hazard is None and landslide.hazard == "landslide"
     assert landslide.direction == "increasing"
     assert landslide.change_per_year and landslide.change_per_year > 0
+    assert len(landslide.counts) == 24 and landslide.counts[-1] == 8
+    assert landslide.fit_start is not None and landslide.fit_end is not None
+    assert landslide.fit_end > landslide.fit_start
     steady = [inc(i, date(2024 + i // 12, i % 12 + 1, 1)) for i in range(24)]
     assert trends(steady, date(2024, 1, 1), date(2025, 12, 31))[0].direction == "no_clear_trend"
     short = trends(steady[:6], date(2024, 1, 1), date(2024, 6, 30))
@@ -137,6 +140,8 @@ def test_patterns_on_demo_history_are_descriptive(api: TestClient, db: Session, 
     assert "were identified in the recorded dataset" in body["findings"][0]["text"]
     for finding in body["findings"]:
         assert not FORWARD_LOOKING.search(finding["text"]), finding["text"]
+    assert len(body["trend_months"]) == 24 and body["trend_months"][0] == "2024-09"
+    assert all(len(t["counts"]) == 24 for t in body["trends"])
     spot = body["hotspots"][0]
     assert spot["id"] == "H1" and spot["count"] >= 3 and spot["reference_nos"]
     assert body["parameters"] == {

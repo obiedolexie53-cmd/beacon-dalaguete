@@ -583,7 +583,7 @@ MDRRMO assessment.
 | 11  | Disaster map                        | Leaflet map, filters, marker summaries                                      |
 | 12  | Historical report analysis          | record import, DEMO history, 4.1 aggregations, CSV export                   |
 | 13  | ML-assisted pattern analysis        | 4.2 recurrence, DBSCAN hotspots, seasonality, trends, co-occurrence + tests |
-| 14  | Pattern visualization               | 4.3 charts, heatmaps, hotspot layer                                         |
+| 14  | Pattern visualization               | 4.3 hotspot map, heatmap tables, trend chart                                |
 | 15  | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states          |
 
 Error and empty states (offline, failed submission, missing fields, location

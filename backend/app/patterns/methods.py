@@ -240,23 +240,40 @@ class Trend:
     tau: float | None
     p_value: float | None
     direction: Literal["increasing", "decreasing", "no_clear_trend", "insufficient_data"]
+    #: Records in each month of the period, oldest first.
+    counts: tuple[int, ...] = ()
+    #: Sen's line at the first and last month (for drawing it over the data only).
+    fit_start: float | None = None
+    fit_end: float | None = None
 
 
 def _trend(hazard: str | None, counts: list[int], min_months: int, min_records: int) -> Trend:
     total = sum(counts)
     if len(counts) < min_months or total < min_records:
-        return Trend(hazard, total, len(counts), None, None, None, "insufficient_data")
+        return Trend(
+            hazard, total, len(counts), None, None, None, "insufficient_data", tuple(counts)
+        )
     x = np.arange(len(counts))
     result = stats.kendalltau(x, counts)
     tau, p_value = float(result.statistic), float(result.pvalue)
-    slope = float(stats.theilslopes(counts, x).slope) * 12
+    sen = stats.theilslopes(counts, x)
+    slope, intercept = float(sen.slope), float(sen.intercept)
     if math.isnan(tau):  # every month had the same count
         tau, p_value = 0.0, 1.0
-    direction = "no_clear_trend"
+    direction: Literal["increasing", "decreasing", "no_clear_trend"] = "no_clear_trend"
     if p_value < SIGNIFICANCE:
         direction = "increasing" if tau > 0 else "decreasing"
     return Trend(
-        hazard, total, len(counts), round(slope, 2), round(tau, 4), round(p_value, 6), direction
+        hazard,
+        total,
+        len(counts),
+        round(slope * 12, 2),
+        round(tau, 4),
+        round(p_value, 6),
+        direction,
+        tuple(counts),
+        round(max(0.0, intercept), 3),
+        round(max(0.0, intercept + slope * (len(counts) - 1)), 3),
     )
 
 

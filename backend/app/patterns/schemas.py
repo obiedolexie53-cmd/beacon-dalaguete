@@ -81,6 +81,11 @@ class TrendOut(BaseModel):
     tau: float | None
     p_value: float | None
     direction: TrendDirection
+    #: Records per month over the period (see PatternAnalysis.trend_months).
+    counts: list[int]
+    #: Sen's line at the first and last month; drawn over the data only, never beyond.
+    fit_start: float | None
+    fit_end: float | None
 
 
 class CoOccurrenceOut(BaseModel):
@@ -101,6 +106,8 @@ class PatternAnalysis(BaseModel):
     recurring_locations: list[RecurrenceOut]
     hotspots: list[HotspotOut]
     seasonality: list[SeasonalityOut]
+    #: The months ("YYYY-MM") that TrendOut.counts refer to.
+    trend_months: list[str]
     trends: list[TrendOut]
     co_occurrence: list[CoOccurrenceOut]
     generated_at: datetime

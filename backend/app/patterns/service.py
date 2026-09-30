@@ -117,6 +117,7 @@ def identify_patterns(
         recurring_locations=[],
         hotspots=[],
         seasonality=[],
+        trend_months=[],
         trends=[],
         co_occurrence=[],
         generated_at=datetime.now(UTC),
@@ -171,6 +172,7 @@ def identify_patterns(
         )
         for s in seasons
     ]
+    result.trend_months = [f"{y:04d}-{mo:02d}" for y, mo in m.month_span(first, last)]
     result.trends = [
         TrendOut(
             hazard=hazard(t.hazard) if t.hazard else None,
@@ -180,6 +182,9 @@ def identify_patterns(
             tau=t.tau,
             p_value=t.p_value,
             direction=t.direction,
+            counts=list(t.counts),
+            fit_start=t.fit_start,
+            fit_end=t.fit_end,
         )
         for t in trend_list
     ]

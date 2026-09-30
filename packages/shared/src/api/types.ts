@@ -359,7 +359,13 @@ export interface PatternAnalysis {
     tau: number | null;
     p_value: number | null;
     direction: TrendDirection;
+    /** Records per month over the period; months are in `trend_months`. */
+    counts: number[];
+    /** Sen's line at the first and last month (draw over the data only). */
+    fit_start: number | null;
+    fit_end: number | null;
   }>;
+  trend_months: string[];
   co_occurrence: Array<{
     hazard: NamedRef;
     with_hazard: NamedRef;

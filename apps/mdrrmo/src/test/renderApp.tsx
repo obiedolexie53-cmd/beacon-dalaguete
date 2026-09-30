@@ -224,7 +224,10 @@ export function makeAnalysis(overrides: Partial<IncidentAnalysis> = {}): Inciden
     by_hour: Array.from({ length: 24 }, (_, h) => ({ key: h, count: h === 16 ? 4 : 0 })),
     unknown_time: 1,
     by_weekday: Array.from({ length: 7 }, (_, d) => ({ key: d + 1, count: d === 2 ? 5 : 0 })),
-    hazard_by_barangay: [],
+    hazard_by_barangay: [
+      { hazard: 'landslide', barangay_id: 23, count: 3 },
+      { hazard: 'flood', barangay_id: 28, count: 2 },
+    ],
     hazard_by_month_of_year: [],
     generated_at: '2026-09-30T06:00:00Z',
     ...overrides,
@@ -308,6 +311,7 @@ export function makePatterns(overrides: Partial<PatternAnalysis> = {}): PatternA
         concentrated: false,
       },
     ],
+    trend_months: ['2026-06', '2026-07', '2026-08', '2026-09'],
     trends: [
       {
         hazard: null,
@@ -317,6 +321,9 @@ export function makePatterns(overrides: Partial<PatternAnalysis> = {}): PatternA
         tau: 0.08,
         p_value: 0.6,
         direction: 'no_clear_trend',
+        counts: [12, 30, 25, 20],
+        fit_start: 20,
+        fit_end: 24,
       },
       {
         hazard: LANDSLIDE,
@@ -326,6 +333,9 @@ export function makePatterns(overrides: Partial<PatternAnalysis> = {}): PatternA
         tau: 0.4,
         p_value: 0.01,
         direction: 'increasing',
+        counts: [2, 5, 9, 14],
+        fit_start: 1.5,
+        fit_end: 13,
       },
     ],
     co_occurrence: [{ hazard: TYPHOON, with_hazard: LANDSLIDE, count: 4, share: 0.8, lift: 2.1 }],
