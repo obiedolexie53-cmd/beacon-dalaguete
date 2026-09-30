@@ -5,12 +5,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 
-from app.analysis.schemas import AnalysisScope, IncidentAnalysis
+from app.analysis.schemas import AnalysisFiltersOut, AnalysisScope, IncidentAnalysis
 from app.analysis.service import analyse_incidents, export_csv, statuses_for
 from app.audit.service import record
 from app.auth.deps import CurrentStaff, DbSession, client_ip
 from app.core.errors import ApiError
 from app.models import ReportSource
+from app.patterns.schemas import PatternAnalysis, PatternParameters
+from app.patterns.service import identify_patterns
 from app.reports.validation import local_now
 from app.staff.queries import ReportFilters
 
@@ -54,6 +56,41 @@ Params = Annotated[AnalysisParams, Depends()]
 def incident_analysis(_staff: CurrentStaff, db: DbSession, params: Params) -> IncidentAnalysis:
     """Counts of recorded incidents by hazard, barangay and time (descriptive only)."""
     return analyse_incidents(db, params.filters, params.scope)
+
+
+@router.get("/patterns", response_model=PatternAnalysis)
+def pattern_analysis(
+    _staff: CurrentStaff,
+    db: DbSession,
+    params: Params,
+    hotspot_distance_m: Annotated[int, Query(ge=100, le=5000)] = 500,
+    hotspot_min_records: Annotated[int, Query(ge=2, le=50)] = 3,
+    recurrence_min_records: Annotated[int, Query(ge=2, le=50)] = 3,
+    co_occurrence_days: Annotated[int, Query(ge=0, le=7)] = 2,
+) -> PatternAnalysis:
+    """4.2 Hazard Pattern Identification on recorded incidents (descriptive only):
+    recurring locations, DBSCAN hotspots, seasonality, trends and co-occurrence."""
+    filters = params.filters
+    return identify_patterns(
+        db,
+        filters,
+        AnalysisFiltersOut(
+            scope=params.scope,
+            statuses=list(filters.statuses or ()),
+            hazard=filters.hazard,
+            barangay_id=filters.barangay_id,
+            source=filters.source,
+            date_from=filters.date_from,
+            date_to=filters.date_to,
+            include_demo=filters.include_demo,
+        ),
+        PatternParameters(
+            hotspot_distance_m=hotspot_distance_m,
+            hotspot_min_records=hotspot_min_records,
+            recurrence_min_records=recurrence_min_records,
+            co_occurrence_days=co_occurrence_days,
+        ),
+    )
 
 
 @router.get(

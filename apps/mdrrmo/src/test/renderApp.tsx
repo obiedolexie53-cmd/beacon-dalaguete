@@ -4,6 +4,7 @@ import { AuthProvider } from '@beacon/auth';
 import {
   ApiClient,
   type IncidentAnalysis,
+  type PatternAnalysis,
   type MapData,
   type MapPoint,
   type SessionResponse,
@@ -230,6 +231,109 @@ export function makeAnalysis(overrides: Partial<IncidentAnalysis> = {}): Inciden
   };
 }
 
+const LANDSLIDE = { code: 'landslide', name: 'Landslide' };
+const TYPHOON = { code: 'typhoon', name: 'Typhoon' };
+
+export function makePatterns(overrides: Partial<PatternAnalysis> = {}): PatternAnalysis {
+  return {
+    filters: makeAnalysis().filters,
+    parameters: {
+      hotspot_distance_m: 500,
+      hotspot_min_records: 3,
+      recurrence_min_records: 3,
+      co_occurrence_days: 2,
+    },
+    dataset: {
+      total: 215,
+      with_coordinates: 173,
+      first_incident: '2024-10-06',
+      last_incident: '2026-09-30',
+      months_covered: 24,
+      sufficient: true,
+    },
+    findings: [
+      {
+        kind: 'recurrence',
+        hazard: 'landslide',
+        text: 'Recurring landslide incidents were identified in the recorded dataset for Mantalongon: 10 records in 8 different months, from Nov 2024 to Sep 2026.',
+      },
+      {
+        kind: 'trend',
+        hazard: null,
+        text: 'No clear upward or downward trend was found in the number of incidents recorded per month over the 24 months covered.',
+      },
+    ],
+    recurring_locations: [
+      {
+        hazard: LANDSLIDE,
+        barangay_id: 23,
+        barangay: 'Mantalongon',
+        count: 10,
+        months_with_records: 8,
+        years_with_records: 3,
+        first: '2024-11-02',
+        last: '2026-09-12',
+        share_of_hazard: 0.1667,
+      },
+    ],
+    hotspots: [
+      {
+        id: 'H1',
+        hazard: LANDSLIDE,
+        count: 3,
+        center_latitude: 9.8412,
+        center_longitude: 123.4873,
+        radius_m: 485,
+        barangays: ['Mantalongon'],
+        first: '2024-11-02',
+        last: '2026-09-12',
+        reference_nos: ['IMP-2024-000003', 'IMP-2025-000010', 'IMP-2026-000040'],
+      },
+    ],
+    seasonality: [
+      {
+        hazard: LANDSLIDE,
+        total: 60,
+        monthly: [1, 0, 1, 0, 1, 4, 5, 6, 14, 8, 15, 5],
+        peak_months: [9, 11],
+        p_value: 0.000001,
+        concentrated: true,
+      },
+      {
+        hazard: TYPHOON,
+        total: 5,
+        monthly: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+        peak_months: [],
+        p_value: null,
+        concentrated: false,
+      },
+    ],
+    trends: [
+      {
+        hazard: null,
+        total: 215,
+        months: 24,
+        change_per_year: 1.55,
+        tau: 0.08,
+        p_value: 0.6,
+        direction: 'no_clear_trend',
+      },
+      {
+        hazard: LANDSLIDE,
+        total: 60,
+        months: 24,
+        change_per_year: 3,
+        tau: 0.4,
+        p_value: 0.01,
+        direction: 'increasing',
+      },
+    ],
+    co_occurrence: [{ hazard: TYPHOON, with_hazard: LANDSLIDE, count: 4, share: 0.8, lift: 2.1 }],
+    generated_at: '2026-09-30T06:00:00Z',
+    ...overrides,
+  };
+}
+
 type Override = (init?: RequestInit) => Response | Promise<Response>;
 
 export function signedInWith(overrides: Record<string, Override> = {}): Handler {
@@ -250,6 +354,7 @@ export function signedInWith(overrides: Record<string, Override> = {}): Handler 
     }
     if (path === '/staff/reports/BEA-2026-000125') return json(200, makeDetail());
     if (path.startsWith('/staff/analysis/incidents?')) return json(200, makeAnalysis());
+    if (path.startsWith('/staff/analysis/patterns?')) return json(200, makePatterns());
     return json(404, {});
   };
 }

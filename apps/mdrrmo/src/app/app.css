@@ -160,6 +160,8 @@
 /* ----- Table ----- */
 .m-table-wrap {
   overflow-x: auto;
+  /* Keeps visually hidden text inside the scroll area instead of widening the page. */
+  position: relative;
 }
 .m-table {
   width: 100%;
@@ -722,4 +724,79 @@
   font-size: var(--bcn-text-xs);
   color: var(--bcn-text-muted);
   white-space: nowrap;
+}
+
+/* ----- Pattern analysis (4.2) ----- */
+.m-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--bcn-blue-600);
+  margin-bottom: var(--bcn-space-3);
+}
+.m-pattern-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bcn-space-3);
+}
+.m-pattern-findings li {
+  display: flex;
+  gap: var(--bcn-space-3);
+  align-items: flex-start;
+}
+.m-pattern-findings__icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--bcn-navy-900);
+}
+.m-ref-list summary {
+  cursor: pointer;
+  color: var(--bcn-blue-600);
+  white-space: nowrap;
+}
+.m-ref-list ul {
+  margin: var(--bcn-space-2) 0 0;
+  padding-left: var(--bcn-space-4);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.m-month-profile__bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--bcn-border);
+}
+.m-month-profile__bar {
+  width: 8px;
+  border-radius: 2px 2px 0 0;
+  background: var(--bcn-blue-100);
+  box-shadow: inset 0 0 0 1px var(--bcn-blue-500);
+}
+.m-month-profile__bar[data-peak] {
+  background: var(--bcn-blue-600);
+  box-shadow: none;
+}
+.m-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bcn-space-1);
+  font-weight: 600;
+}
+.m-methods {
+  margin: 0;
+  display: grid;
+  gap: var(--bcn-space-2);
+}
+.m-methods dt {
+  font-weight: 700;
+}
+.m-methods dd {
+  margin: 0 0 var(--bcn-space-2);
+  color: var(--bcn-text-muted);
 }

@@ -413,7 +413,51 @@ status_changed`) instead of silently overwriting it. The report row is locked
   as formulas. Each export is written to the audit log (`reports.exported`)
   with its filters and row count.
 
-**Status workflow** (enforced in the API; a new report always starts as
+**Implementation notes (Phase 13):**
+
+- `GET /api/v1/staff/analysis/patterns` runs 4.2 Hazard Pattern
+  Identification on the same filters as 4.1 (MDRRMO-confirmed records by
+  default). The methods are in `backend/app/patterns/methods.py`, which has no
+  database code so each method is unit-tested on small synthetic datasets:
+  - **Recurring hazard locations:** a hazard type recorded at least _n_ times
+    (default 3), in at least two different months, in one barangay. Ranked by
+    number of records.
+  - **Hotspots:** DBSCAN (scikit-learn, haversine distance, ball tree), run
+    separately for each hazard type on records with map pins. Defaults are
+    500 m and 3 records. Each hotspot lists its centre, radius, barangays,
+    period and record numbers.
+  - **Seasonality:** a chi-square goodness-of-fit test of records per month of
+    the year against an even spread. The expected counts allow for how often
+    each month occurs in the period. When p < 0.05, months with a
+    standardised residual ≥ 2 are named as peaks. At least 12 records are
+    needed.
+  - **Trends:** a Mann-Kendall test (Kendall's tau against time) on monthly
+    counts, with Sen's slope as the change per year, overall and per hazard.
+    At least 12 months and 10 records are needed.
+  - **Recorded together:** records of one hazard type with a record of another
+    type within _d_ days (default 2) anywhere in the municipality. "Times as
+    often" compares this with the other type's records in the same calendar
+    month spread evenly over that month. This keeps hazards that merely share
+    a rainy season from looking linked.
+- With fewer than 10 matching records no patterns are looked for, and the
+  page says so.
+- **Wording.** Findings are generated from fixed templates in the past tense
+  about the recorded dataset, for example "Recurring landslide incidents were
+  identified in the recorded dataset for Mantalongon…". A test checks that no
+  finding contains forward-looking words (will, likely to, predict, forecast).
+  The page repeats the non-prediction notice and explains each method and its
+  limits: under-reporting, the start of app reporting, and small numbers.
+- **Settings** (hotspot distance, records per hotspot, records for a recurring
+  location, days for "recorded together") are adjustable on the page and kept
+  in the URL, so a view can be shared and reproduced. The analysis runs on
+  demand (about 0.2 s for a few hundred records) and nothing is stored.
+- On the generated DEMO history the methods recover the invented patterns:
+  recurring landslides in upland barangays, flood hotspots on the coast,
+  September to November peaks, fires in March, typhoons recorded together with
+  strong winds, and no trend. This is a check that the methods work, not
+  evidence about Dalaguete.
+
+; a new report always starts as
 `submitted`):
 
 ```
@@ -538,7 +582,7 @@ MDRRMO assessment.
 | 10  | Review & verification               | detail view, media viewer, status workflow + history                        |
 | 11  | Disaster map                        | Leaflet map, filters, marker summaries                                      |
 | 12  | Historical report analysis          | record import, DEMO history, 4.1 aggregations, CSV export                   |
-| 13  | ML-assisted pattern analysis        | 4.2 clustering/frequency/trend module + tests                               |
+| 13  | ML-assisted pattern analysis        | 4.2 recurrence, DBSCAN hotspots, seasonality, trends, co-occurrence + tests |
 | 14  | Pattern visualization               | 4.3 charts, heatmaps, hotspot layer                                         |
 | 15  | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states          |
 

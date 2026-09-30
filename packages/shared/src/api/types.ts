@@ -289,3 +289,83 @@ export interface IncidentAnalysis {
   hazard_by_month_of_year: Array<{ hazard: string; month_of_year: number; count: number }>;
   generated_at: string;
 }
+
+/** 4.2 Hazard Pattern Identification (ML-assisted). Describes recorded data only. */
+export interface NamedRef {
+  code: string;
+  name: string;
+}
+
+export type PatternFindingKind =
+  'recurrence' | 'hotspot' | 'seasonality' | 'trend' | 'co_occurrence';
+
+export type TrendDirection = 'increasing' | 'decreasing' | 'no_clear_trend' | 'insufficient_data';
+
+export interface PatternAnalysis {
+  filters: IncidentAnalysis['filters'];
+  parameters: {
+    hotspot_distance_m: number;
+    hotspot_min_records: number;
+    recurrence_min_records: number;
+    co_occurrence_days: number;
+  };
+  dataset: {
+    total: number;
+    with_coordinates: number;
+    first_incident: string | null;
+    last_incident: string | null;
+    months_covered: number;
+    sufficient: boolean;
+  };
+  findings: Array<{ kind: PatternFindingKind; hazard: string | null; text: string }>;
+  recurring_locations: Array<{
+    hazard: NamedRef;
+    barangay_id: number;
+    barangay: string;
+    count: number;
+    months_with_records: number;
+    years_with_records: number;
+    first: string;
+    last: string;
+    share_of_hazard: number;
+  }>;
+  hotspots: Array<{
+    id: string;
+    hazard: NamedRef;
+    count: number;
+    center_latitude: number;
+    center_longitude: number;
+    radius_m: number;
+    barangays: string[];
+    first: string;
+    last: string;
+    reference_nos: string[];
+  }>;
+  seasonality: Array<{
+    hazard: NamedRef;
+    total: number;
+    /** Records per month of the year, January first. */
+    monthly: number[];
+    peak_months: number[];
+    p_value: number | null;
+    concentrated: boolean;
+  }>;
+  trends: Array<{
+    /** Null = all hazard types together. */
+    hazard: NamedRef | null;
+    total: number;
+    months: number;
+    change_per_year: number | null;
+    tau: number | null;
+    p_value: number | null;
+    direction: TrendDirection;
+  }>;
+  co_occurrence: Array<{
+    hazard: NamedRef;
+    with_hazard: NamedRef;
+    count: number;
+    share: number;
+    lift: number | null;
+  }>;
+  generated_at: string;
+}

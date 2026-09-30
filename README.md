@@ -15,13 +15,15 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phases 1–12 complete: project structure, design system and navigation,
+Phases 1–13 complete: project structure, design system and navigation,
 resident/staff authentication, the resident dashboard, the complete reporting
 flow (hazard type, incident details, location with GPS and map, photo/video
 evidence, review and submission), report details with status history, in-app
 notifications, the MDRRMO monitoring dashboard, report search, review and
 verification, the disaster map, and historical reports: importing past MDRRMO
-records, Incident Data Analysis (4.1) and CSV export.
+records, Incident Data Analysis (4.1) and CSV export, and ML-assisted Hazard
+Pattern Identification (4.2): recurring locations, DBSCAN hotspots, seasonal
+patterns, trends and hazards recorded together.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
 the design system.
