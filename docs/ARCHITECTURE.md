@@ -323,6 +323,27 @@ too_many_reports`), with a message pointing to the MDRRMO.
 - The dashboard refreshes itself every minute while visible, shows when it was
   last updated, and keeps the last figures on screen if a refresh fails.
 
+**Implementation notes (Phase 10):**
+
+- `GET /api/v1/staff/reports` searches (reference number, description,
+  landmark, reporter name) and filters (status, hazard, barangay, incident date
+  range, demo records), 20 per page, newest first. The console keeps filters
+  in the URL, and the dashboard tiles link to the matching filtered list.
+- `GET /api/v1/staff/reports/{reference_no}` returns the full report with the
+  reporter's contact details, evidence, staff names in the history and the
+  allowed next actions. **Every view is written to the audit log**
+  (`report.viewed`), and the console reminds staff that the information is
+  covered by the Data Privacy Act.
+- `POST /api/v1/staff/reports/{reference_no}/status` uses `change_status`. The
+  request carries the status the officer saw (`from_status`). If another
+  officer changed the report in the meantime, the update is refused (`409
+status_changed`) instead of silently overwriting it. The report row is locked
+  during the update.
+- Not included (open questions from the start of the project): an
+  Invalid/Duplicate status, and in-app replies from residents to
+  clarification requests. Residents are asked to contact the MDRRMO. Both can
+  be added without changing the existing workflow.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

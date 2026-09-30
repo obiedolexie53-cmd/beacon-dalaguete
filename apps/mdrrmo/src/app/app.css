@@ -254,3 +254,208 @@
 .m-stat__value {
   font-variant-numeric: tabular-nums;
 }
+
+/* ----- Dashboard tile links ----- */
+.m-stat--link {
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s;
+}
+.m-stat--link:hover {
+  box-shadow: var(--bcn-shadow-raised);
+}
+
+/* ----- Reports list ----- */
+.m-filters {
+  display: grid;
+  gap: var(--bcn-space-4);
+}
+.m-filters__search {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--bcn-space-3);
+}
+.m-filters__search .bcn-field {
+  flex: 1;
+}
+.m-filters__search > .bcn-button {
+  margin-bottom: 0;
+}
+.m-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--bcn-space-3);
+}
+.m-filters__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bcn-space-3);
+  flex-wrap: wrap;
+}
+.m-results {
+  margin: 0 0 var(--bcn-space-3);
+  font-size: var(--bcn-text-sm);
+}
+.m-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--bcn-space-3);
+  margin-top: var(--bcn-space-4);
+  font-size: var(--bcn-text-sm);
+}
+
+/* ----- Report review ----- */
+.m-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas: 'main side';
+  gap: var(--bcn-space-5);
+  align-items: start;
+}
+.m-review__main {
+  grid-area: main;
+  min-width: 0;
+}
+.m-review__side {
+  grid-area: side;
+  position: sticky;
+  top: var(--bcn-space-4);
+}
+@media (max-width: 1100px) {
+  .m-review {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'side' 'main';
+  }
+  .m-review__side {
+    position: static;
+  }
+}
+.m-detail-list {
+  display: grid;
+  gap: var(--bcn-space-1);
+  margin: 0;
+}
+.m-detail-list dt {
+  color: var(--bcn-text-muted);
+  font-size: var(--bcn-text-sm);
+}
+.m-detail-list dd {
+  margin: 0 0 var(--bcn-space-2);
+  overflow-wrap: anywhere;
+}
+@media (min-width: 700px) {
+  .m-detail-list--columns {
+    grid-template-columns: 160px 1fr;
+    column-gap: var(--bcn-space-4);
+  }
+}
+.m-prewrap {
+  white-space: pre-wrap;
+}
+.m-incident-head {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-3);
+  margin-bottom: var(--bcn-space-4);
+  font-size: var(--bcn-text-lg);
+}
+.m-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bcn-space-1);
+}
+.m-privacy-note {
+  display: flex;
+  gap: var(--bcn-space-2);
+  margin: 0;
+  padding: var(--bcn-space-3);
+  border-radius: var(--bcn-radius-sm);
+  background: var(--bcn-amber-100);
+  font-size: var(--bcn-text-sm);
+}
+.m-privacy-note svg {
+  flex: none;
+  margin-top: 2px;
+}
+.m-actions-row {
+  display: flex;
+  gap: var(--bcn-space-2);
+}
+.m-actions-row > * {
+  flex: 1;
+}
+.m-map {
+  height: 320px;
+  border-radius: var(--bcn-radius-md);
+  border: 1px solid var(--bcn-border);
+  z-index: 0;
+  isolation: isolate;
+}
+.m-map-pin {
+  background: none;
+  border: none;
+}
+.m-evidence {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--bcn-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-evidence img,
+.m-evidence video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--bcn-radius-md);
+  background: #000;
+}
+.m-timeline {
+  display: grid;
+  gap: var(--bcn-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-timeline li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--bcn-space-6);
+}
+.m-timeline li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bcn-border);
+}
+.m-timeline li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 20px;
+  bottom: calc(var(--bcn-space-4) * -1);
+  width: 2px;
+  background: var(--bcn-border);
+}
+.m-timeline li.is-current::before {
+  background: var(--bcn-navy-900);
+  box-shadow: 0 0 0 3px var(--bcn-blue-100);
+}
+.m-timeline span {
+  font-size: var(--bcn-text-sm);
+}
+.m-quote {
+  margin: var(--bcn-space-2) 0 0;
+  padding: var(--bcn-space-2) var(--bcn-space-3);
+  border-left: 3px solid var(--bcn-blue-600);
+  background: var(--bcn-surface-muted);
+  border-radius: 0 var(--bcn-radius-sm) var(--bcn-radius-sm) 0;
+}

@@ -10,7 +10,7 @@ describe('access control', () => {
   it('sends signed-out visitors to the staff login', async () => {
     const { router } = renderApp('/dashboard', anonymous);
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
-    expect(screen.getByRole('heading', { name: 'MDRRMO Staff Login' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'MDRRMO Staff Login' })).toBeTruthy();
   });
 
   it('has no public registration', async () => {

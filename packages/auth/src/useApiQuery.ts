@@ -7,6 +7,8 @@ export interface ApiQuery<T> {
   loading: boolean;
   /** Fetch again (e.g. from a "Try again" button). */
   reload: () => void;
+  /** Replace the data locally, e.g. with the server's response after an update. */
+  mutate: (data: T) => void;
 }
 
 /** GET `path` with the signed-in user's API client, tracking loading and error state. */
@@ -35,5 +37,7 @@ export function useApiQuery<T>(path: string): ApiQuery<T> {
     setAttempt((n) => n + 1);
   }, []);
 
-  return { ...state, reload };
+  const mutate = useCallback((data: T) => setState({ data, error: null, loading: false }), []);
+
+  return { ...state, reload, mutate };
 }

@@ -44,7 +44,7 @@ describe('step 1: hazard', () => {
     await userEvent.type(screen.getByLabelText('Describe the hazard'), 'Sinkhole');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/report/new/details'));
-    expect(screen.getByText('Other hazard: Sinkhole')).toBeTruthy();
+    expect(await screen.findByText('Other hazard: Sinkhole')).toBeTruthy();
   });
 });
 

@@ -165,3 +165,47 @@ export interface StaffDashboard {
   include_demo: boolean;
   generated_at: string;
 }
+
+export interface StaffReportPage {
+  items: StaffReportRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ReporterInfo {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  barangay: Barangay | null;
+}
+
+export interface StaffTimelineEntry {
+  status: ReportStatus;
+  changed_at: string;
+  by_role: 'resident' | 'mdrrmo';
+  actor_name: string | null;
+  note: string | null;
+}
+
+export interface StaffReportDetail extends StaffReportRow {
+  description: string;
+  municipality: string;
+  province: string;
+  landmark: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  location_accuracy_m: number | null;
+  location_source: 'gps' | 'map_pin' | 'manual' | null;
+  reporter: ReporterInfo;
+  timeline: StaffTimelineEntry[];
+  media: MediaItem[];
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_notes: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_notes: string | null;
+  allowed_actions: ReportStatus[];
+}

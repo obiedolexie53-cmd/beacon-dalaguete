@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { ReportsTable } from '../reports/ReportsTable';
 import {
   CircleCheckBig,
   CircleHelp,
@@ -14,9 +15,7 @@ import { useApiQuery } from '@beacon/auth';
 import {
   ApiError,
   NETWORK_ERROR_MESSAGE,
-  formatIncidentDateTime,
   formatTimestamp,
-  hazardLabel,
   type StaffDashboard,
   type StaffStatusCounts,
 } from '@beacon/shared';
@@ -27,22 +26,35 @@ import {
   CheckboxField,
   DemoBadge,
   EmptyState,
-  HazardIcon,
   PageHeader,
   Skeleton,
-  StatusBadge,
 } from '@beacon/ui';
 
 /** The dashboard refreshes itself while it is on screen. */
 export const DASHBOARD_REFRESH_MS = 60_000;
 
-const TILES: Array<{ key: keyof StaffStatusCounts; label: string; Icon: LucideIcon }> = [
+const TILES: Array<{
+  key: keyof StaffStatusCounts;
+  label: string;
+  Icon: LucideIcon;
+  status?: string;
+}> = [
   { key: 'total', label: 'Total reports', Icon: FileText },
-  { key: 'new', label: 'New reports', Icon: Inbox },
-  { key: 'under_verification', label: 'Under verification', Icon: Search },
-  { key: 'needs_clarification', label: 'Needs clarification', Icon: CircleHelp },
-  { key: 'verified', label: 'Verified', Icon: ShieldCheck },
-  { key: 'resolved', label: 'Resolved', Icon: CircleCheckBig },
+  { key: 'new', label: 'New reports', Icon: Inbox, status: 'submitted' },
+  {
+    key: 'under_verification',
+    label: 'Under verification',
+    Icon: Search,
+    status: 'under_verification',
+  },
+  {
+    key: 'needs_clarification',
+    label: 'Needs clarification',
+    Icon: CircleHelp,
+    status: 'needs_clarification',
+  },
+  { key: 'verified', label: 'Verified', Icon: ShieldCheck, status: 'verified' },
+  { key: 'resolved', label: 'Resolved', Icon: CircleCheckBig, status: 'resolved' },
 ];
 
 export function DashboardPage() {
@@ -110,17 +122,28 @@ export function DashboardPage() {
       )}
 
       <div className="m-stats" aria-label="Report counts" aria-busy={!data}>
-        {TILES.map(({ key, label, Icon }) => (
-          <Card key={key} className="m-stat">
-            <span className="m-stat__label">
-              <Icon size={18} aria-hidden="true" />
-              {label}
-            </span>
-            <span className="m-stat__value">
-              {data ? data.counts[key] : <Skeleton width={48} height={32} />}
-            </span>
-          </Card>
-        ))}
+        {TILES.map(({ key, label, Icon, status }) => {
+          const params = new URLSearchParams();
+          if (status) params.set('status', status);
+          if (!includeDemo) params.set('demo', '0');
+          const query = params.toString();
+          return (
+            <Link
+              key={key}
+              to={query ? `/reports?${query}` : '/reports'}
+              className="bcn-card m-stat m-stat--link"
+              aria-label={data ? `${label}: ${data.counts[key]}. View these reports` : label}
+            >
+              <span className="m-stat__label">
+                <Icon size={18} aria-hidden="true" />
+                {label}
+              </span>
+              <span className="m-stat__value">
+                {data ? data.counts[key] : <Skeleton width={48} height={32} />}
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       <Card title="Recent reports">
@@ -137,67 +160,12 @@ export function DashboardPage() {
             description="New reports from residents will appear here."
           />
         ) : data ? (
-          <RecentReportsTable data={data} />
+          <ReportsTable
+            rows={data.recent_reports}
+            caption={`The ${data.recent_reports.length} most recently submitted reports`}
+          />
         ) : null}
       </Card>
-    </div>
-  );
-}
-
-function RecentReportsTable({ data }: { data: StaffDashboard }) {
-  return (
-    <div className="m-table-wrap">
-      <table className="m-table">
-        <caption className="bcn-visually-hidden">
-          The {data.recent_reports.length} most recently submitted reports
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Report ID</th>
-            <th scope="col">Hazard</th>
-            <th scope="col">Barangay</th>
-            <th scope="col" className="m-col-date">
-              Date/time
-            </th>
-            <th scope="col">Status</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.recent_reports.map((row) => (
-            <tr key={row.id}>
-              <td>
-                <span className="m-ref-cell">
-                  {row.reference_no}
-                  {row.is_demo && <DemoBadge>DEMO</DemoBadge>}
-                </span>
-              </td>
-              <td>
-                <span className="m-hazard-cell">
-                  <HazardIcon code={row.hazard_type.code} size={32} />
-                  {hazardLabel(row)}
-                </span>
-              </td>
-              <td>{row.barangay?.name ?? '—'}</td>
-              <td className="m-col-date">
-                {formatIncidentDateTime(row.incident_date, row.incident_time)}
-                <span className="m-cell-note">Submitted {formatTimestamp(row.submitted_at)}</span>
-              </td>
-              <td>
-                <StatusBadge status={row.status} />
-              </td>
-              <td>
-                <Link
-                  to={`/reports/${row.reference_no}`}
-                  aria-label={`Review report ${row.reference_no}`}
-                >
-                  Review
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

@@ -1,9 +1,13 @@
 import uuid
 from datetime import date, datetime, time
+from decimal import Decimal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.auth.schemas import BarangayOut
+from app.media.schemas import MediaOut
+from app.models import LocationSource
 from app.reports.schemas import HazardTypeOut
 from app.reports.workflow import ReportStatus
 
@@ -40,3 +44,57 @@ class StaffDashboard(BaseModel):
     recent_reports: list[StaffReportRow]
     include_demo: bool
     generated_at: datetime
+
+
+class StaffReportPage(BaseModel):
+    items: list[StaffReportRow]
+    total: int
+    limit: int
+    offset: int
+
+
+class ReporterInfo(BaseModel):
+    """Personal details shown to MDRRMO personnel for verification only."""
+
+    id: uuid.UUID
+    full_name: str
+    email: str | None
+    phone: str | None
+    barangay: BarangayOut | None
+
+
+class StaffTimelineEntry(BaseModel):
+    status: ReportStatus
+    changed_at: datetime
+    by_role: Literal["resident", "mdrrmo"]
+    actor_name: str | None
+    note: str | None
+
+
+class StaffReportDetail(StaffReportRow):
+    description: str
+    municipality: str
+    province: str
+    landmark: str | None
+    latitude: Decimal | None
+    longitude: Decimal | None
+    location_accuracy_m: int | None
+    location_source: LocationSource | None
+    reporter: ReporterInfo
+    timeline: list[StaffTimelineEntry]
+    media: list[MediaOut]
+    verified_at: datetime | None
+    verified_by: str | None
+    verification_notes: str | None
+    resolved_at: datetime | None
+    resolved_by: str | None
+    resolution_notes: str | None
+    #: Statuses this report can move to next (drives the action buttons).
+    allowed_actions: list[ReportStatus]
+
+
+class StatusChangeRequest(BaseModel):
+    status: ReportStatus
+    #: The status the officer saw; if it changed meanwhile, the update is refused.
+    from_status: ReportStatus
+    note: str | None = Field(default=None, max_length=1000)
