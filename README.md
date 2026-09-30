@@ -15,9 +15,10 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phase 1 complete: project structure, architecture and tooling.
+Phases 1–2 complete: project structure, design system and navigation.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
-and phase plan.
+and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
+the design system.
 
 ## Repository layout
 
@@ -26,7 +27,7 @@ and phase plan.
 | `apps/resident`      | Resident PWA (React + TypeScript + Vite), mobile-first       |
 | `apps/mdrrmo`        | MDRRMO console (React + TypeScript + Vite), staff only       |
 | `packages/shared`    | Shared domain constants: hazards, status workflow, ref. nos. |
-| `packages/ui`        | Design tokens (expanded into the design system in Phase 2)   |
+| `packages/ui`        | Design system: tokens, styles, React components              |
 | `backend`            | FastAPI API, Alembic migrations, seed data, tests            |
 | `docker-compose.yml` | PostgreSQL + PostGIS (and optionally the API) for local dev  |
 

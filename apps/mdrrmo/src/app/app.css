@@ -1,0 +1,203 @@
+/* MDRRMO console layout: fixed sidebar on desktop, slide-in drawer on small screens. */
+.m-shell {
+  display: grid;
+  grid-template-columns: var(--bcn-sidebar-width) 1fr;
+  min-height: 100dvh;
+}
+
+.m-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bcn-space-6);
+  height: 100dvh;
+  padding: var(--bcn-space-5) var(--bcn-space-3);
+  background: var(--bcn-navy-900);
+  color: var(--bcn-text-inverse);
+}
+.m-sidebar__brand {
+  padding: 0 var(--bcn-space-2);
+}
+.m-sidebar__caption {
+  display: block;
+  margin-top: var(--bcn-space-1);
+  color: #c9d6ea;
+  font-size: var(--bcn-text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.m-nav ul {
+  display: grid;
+  gap: var(--bcn-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-3);
+  min-height: var(--bcn-touch-target);
+  padding: 0 var(--bcn-space-3);
+  border-radius: var(--bcn-radius-md);
+  color: #dbe5f3;
+  font-weight: 500;
+  text-decoration: none;
+}
+.m-nav a:hover {
+  background: rgb(255 255 255 / 8%);
+}
+.m-nav a.active {
+  background: var(--bcn-surface);
+  color: var(--bcn-navy-900);
+  font-weight: 700;
+}
+.m-nav a.active svg {
+  color: var(--bcn-blue-600);
+}
+.m-sidebar__footer {
+  margin-top: auto;
+  padding: var(--bcn-space-3);
+  border-radius: var(--bcn-radius-md);
+  background: rgb(255 255 255 / 6%);
+  font-size: var(--bcn-text-sm);
+}
+.m-sidebar__footer a {
+  color: #c9d6ea;
+}
+
+.m-main {
+  min-width: 0;
+}
+.m-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bcn-space-3);
+  min-height: 64px;
+  padding: 0 var(--bcn-space-6);
+  background: var(--bcn-surface);
+  border-bottom: 1px solid var(--bcn-border);
+}
+.m-topbar__menu {
+  display: none;
+}
+.m-topbar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  font-weight: 600;
+}
+.m-content {
+  max-width: 1280px;
+  padding: var(--bcn-space-6);
+}
+
+.m-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .m-shell {
+    grid-template-columns: 1fr;
+  }
+  .m-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(var(--bcn-sidebar-width), 85vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .m-shell--nav-open .m-sidebar {
+    transform: none;
+  }
+  .m-shell--nav-open .m-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: rgb(11 37 69 / 45%);
+  }
+  .m-topbar {
+    padding: 0 var(--bcn-space-3);
+  }
+  .m-topbar__menu {
+    display: inline-grid;
+  }
+  .m-content {
+    padding: var(--bcn-space-4);
+  }
+}
+
+/* ----- Dashboard ----- */
+.m-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--bcn-space-4);
+}
+.m-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bcn-space-2);
+}
+.m-stat__label {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  color: var(--bcn-text-muted);
+  font-weight: 600;
+  font-size: var(--bcn-text-sm);
+}
+.m-stat__value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--bcn-navy-900);
+  line-height: 1.1;
+}
+
+/* ----- Table ----- */
+.m-table-wrap {
+  overflow-x: auto;
+}
+.m-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--bcn-text-sm);
+}
+.m-table th {
+  padding: var(--bcn-space-3);
+  text-align: left;
+  color: var(--bcn-text-muted);
+  font-weight: 600;
+  border-bottom: 1.5px solid var(--bcn-border);
+  white-space: nowrap;
+}
+.m-table td {
+  padding: var(--bcn-space-3);
+  border-bottom: 1px solid var(--bcn-border);
+  vertical-align: middle;
+}
+.m-table tr:last-child td {
+  border-bottom: none;
+}
+.m-hazard-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  font-weight: 600;
+}
+
+/* ----- Login ----- */
+.m-login {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--bcn-space-4);
+  background: var(--bcn-navy-900);
+}
+.m-login__card {
+  width: 100%;
+  max-width: 420px;
+}

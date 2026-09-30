@@ -13,11 +13,14 @@
   "dependencies": {
     "@beacon/shared": "workspace:*",
     "@beacon/ui": "workspace:*",
+    "lucide-react": "^1.49.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",

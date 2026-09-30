@@ -1,0 +1,72 @@
+/*
+ * BEACON design tokens.
+ * Every colour, size and radius in both apps comes from here. The TypeScript
+ * mirror in src/tokens.ts is used for charts and map markers.
+ */
+:root {
+  /* Brand */
+  --bcn-navy-900: #0b2545; /* Deep Navy Blue: primary */
+  --bcn-navy-700: #13315c;
+  --bcn-blue-600: #1a62c0; /* Beacon Blue: secondary (AA on white) */
+  --bcn-blue-500: #1d6fd6;
+  --bcn-blue-100: #e3eefc;
+  --bcn-amber-500: #f2a900; /* Golden Amber: accent (use navy text on it) */
+  --bcn-amber-100: #fff4d6;
+
+  /* Semantic */
+  --bcn-success-600: #1a7431;
+  --bcn-success-100: #e3f4e8;
+  --bcn-warning-600: #a34c00; /* Orange, darkened for AA text contrast */
+  --bcn-warning-100: #fff0e0;
+  --bcn-danger-600: #c62828;
+  --bcn-danger-100: #fde8e8;
+  --bcn-info-600: var(--bcn-blue-600);
+  --bcn-info-100: var(--bcn-blue-100);
+
+  /* Neutrals */
+  --bcn-bg: #f3f6fa; /* Very light blue/gray */
+  --bcn-surface: #ffffff; /* Cards */
+  --bcn-surface-muted: #f8fafc;
+  --bcn-border: #d6dee8;
+  --bcn-text: #172033; /* Dark charcoal/navy */
+  --bcn-text-muted: #4a5568;
+  --bcn-text-inverse: #ffffff;
+
+  /* Typography */
+  --bcn-font:
+    'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --bcn-text-xs: 0.8125rem; /* 13px */
+  --bcn-text-sm: 0.875rem; /* 14px */
+  --bcn-text-md: 1rem; /* 16px: body, never smaller for inputs */
+  --bcn-text-lg: 1.125rem;
+  --bcn-text-xl: 1.375rem;
+  --bcn-text-2xl: 1.75rem;
+  --bcn-leading: 1.5;
+
+  /* Spacing (4px grid) */
+  --bcn-space-1: 4px;
+  --bcn-space-2: 8px;
+  --bcn-space-3: 12px;
+  --bcn-space-4: 16px;
+  --bcn-space-5: 20px;
+  --bcn-space-6: 24px;
+  --bcn-space-8: 32px;
+  --bcn-space-10: 40px;
+
+  /* Shape & depth */
+  --bcn-radius-sm: 8px;
+  --bcn-radius-md: 12px;
+  --bcn-radius-card: 16px;
+  --bcn-radius-pill: 999px;
+  --bcn-shadow-card: 0 1px 2px rgb(11 37 69 / 6%), 0 2px 8px rgb(11 37 69 / 6%);
+  --bcn-shadow-raised: 0 4px 16px rgb(11 37 69 / 12%);
+
+  /* Accessibility */
+  --bcn-touch-target: 48px;
+  /* White gap + blue ring: at least 3:1 against both light and navy surfaces */
+  --bcn-focus-ring: 0 0 0 2px var(--bcn-surface), 0 0 0 5px var(--bcn-blue-600);
+
+  /* Layout */
+  --bcn-bottom-nav-height: 64px;
+  --bcn-sidebar-width: 248px;
+}
