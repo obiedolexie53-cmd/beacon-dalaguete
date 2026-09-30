@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://localhost:5174"]
     )
+    # Private evidence storage (never served directly by a web server).
     media_root: Path = Path("./media")
+    media_url_minutes: int = 10
     secret_key: str = INSECURE_DEFAULT_SECRET
 
     # Authentication

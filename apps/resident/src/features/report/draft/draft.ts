@@ -1,4 +1,5 @@
 import { localNow, uuidv4 } from '@beacon/shared';
+import { clearAllEvidence } from '../evidence/evidenceStore';
 
 /**
  * An unsent report, saved on this device only so a resident can finish it
@@ -89,8 +90,9 @@ export function clearDraft(userId: string): void {
   }
 }
 
-/** Remove every saved draft on this device (used on logout, for shared phones). */
+/** Remove every saved draft and its photos/videos from this device (logout, shared phones). */
 export function clearAllDrafts(): void {
+  void clearAllEvidence();
   try {
     Object.keys(localStorage)
       .filter((key) => key.startsWith(KEY_PREFIX))

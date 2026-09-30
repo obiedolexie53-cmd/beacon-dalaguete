@@ -18,12 +18,13 @@ export function PrivacyNotice() {
       <ul>
         <li>Your name, email address and/or mobile number, and barangay</li>
         <li>
-          The disaster reports you submit, including the incident location (GPS), photos and videos
+          The disaster reports you submit, including the incident location (GPS), photos and videos.
+          Location details hidden inside photos are removed before storage.
         </li>
         <li>Basic security records such as sign-in times</li>
         <li>
-          Unsent report drafts, which are kept only on your own device until you submit or discard
-          them, and are deleted when you log out
+          Unsent report drafts and the photos/videos attached to them, which are kept only on your
+          own device until you submit or discard them, and are deleted when you log out
         </li>
       </ul>
       <h3>Why we collect it</h3>

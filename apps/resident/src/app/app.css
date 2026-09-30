@@ -474,3 +474,70 @@
   background: var(--bcn-surface-muted);
   border: 1px solid var(--bcn-border);
 }
+
+/* ----- Evidence step ----- */
+.r-evidence-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--bcn-space-2);
+}
+.r-evidence-actions .bcn-button {
+  padding: 0 var(--bcn-space-2);
+  white-space: nowrap;
+}
+.r-evidence-busy {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  margin: 0;
+  color: var(--bcn-navy-900);
+  font-weight: 600;
+}
+.r-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--bcn-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.r-evidence-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--bcn-border);
+  border-radius: var(--bcn-radius-md);
+  overflow: hidden;
+  background: var(--bcn-surface-muted);
+}
+.r-evidence-item img,
+.r-evidence-item video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #000;
+}
+.r-evidence-item__size {
+  position: absolute;
+  top: var(--bcn-space-2);
+  left: var(--bcn-space-2);
+  padding: 0 var(--bcn-space-2);
+  border-radius: var(--bcn-radius-pill);
+  background: rgb(11 37 69 / 80%);
+  color: var(--bcn-text-inverse);
+  font-size: var(--bcn-text-xs);
+  font-weight: 600;
+}
+/* Stacked so both labels fit in a half-width tile on small phones. */
+.r-evidence-item__actions {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.r-evidence-item__actions .bcn-button {
+  justify-content: flex-start;
+  border-radius: 0;
+  padding: 0 var(--bcn-space-3);
+}
+.r-evidence-item__actions .bcn-button + .bcn-button {
+  border-top: 1px solid var(--bcn-border);
+}

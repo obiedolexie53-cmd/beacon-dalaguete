@@ -262,6 +262,31 @@ too_many_reports`), with a message pointing to the MDRRMO.
 - Keyboard users can pan the map with the arrow keys and use "Place pin at map
   centre", since dragging a pin needs a pointer.
 
+**Implementation notes (Phase 7):**
+
+- Evidence is optional. Each report can have up to 5 photos and 2 videos (videos
+  up to 50 MB each). Files picked in the wizard are kept on the device in
+  IndexedDB with the draft, and deleted on submit, discard and logout. Photos
+  are resized on the phone to at most 2048 px (JPEG) before storage, which
+  saves mobile data.
+- Files are uploaded one at a time _after_ the report exists:
+  `POST /api/v1/me/reports/{reference_no}/media`. A failed upload can then be
+  retried without resending the report. Evidence can be added while a report
+  is Submitted, Under Verification or Needs Clarification.
+- The server detects the real file type from its content (the file name and
+  browser content type are ignored). Photos are re-encoded as JPEG (max 2560 px),
+  which applies the camera rotation and removes all metadata, including EXIF
+  GPS. Oversized "decompression bomb" images are refused.
+- **Known limitation:** videos are stored as uploaded. Phone videos can contain
+  a location tag. Removing it needs `ffmpeg` on the server, planned with the
+  Phase 15 security review. Videos are only ever shown to the reporter and to
+  authorized MDRRMO personnel.
+- Files are stored privately (`BEACON_MEDIA_ROOT`, never served by a web server)
+  and viewed through signed links that expire after 10 minutes
+  (`GET /api/v1/media/{id}?exp=…&sig=…`). Links support range requests for
+  video playback, and responses are `private`, `nosniff` and sandboxed.
+- For deployment, the reverse proxy should cap request bodies at about 60 MB.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

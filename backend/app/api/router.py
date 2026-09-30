@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.api import health
 from app.auth.router import me_router, resident_auth_router, staff_auth_router
 from app.locations.router import router as locations_router
+from app.media.router import public_router as media_public_router
+from app.media.router import resident_router as media_resident_router
 from app.reports.router import public_router as reports_public_router
 from app.reports.router import resident_router as reports_resident_router
 
@@ -14,3 +16,5 @@ api_router.include_router(staff_auth_router, prefix="/staff/auth", tags=["auth: 
 api_router.include_router(me_router)
 api_router.include_router(reports_public_router)
 api_router.include_router(reports_resident_router)
+api_router.include_router(media_resident_router)
+api_router.include_router(media_public_router)

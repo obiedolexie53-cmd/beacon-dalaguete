@@ -7,3 +7,4 @@ export * from './phone';
 export * from './format';
 export * from './reportRules';
 export * from './uuid';
+export * from './evidence';

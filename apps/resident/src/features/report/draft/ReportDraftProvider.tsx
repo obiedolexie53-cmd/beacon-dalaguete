@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { deleteDraftEvidence } from '../evidence/evidenceStore';
 import { clearDraft, loadDraft, newDraft, saveDraft, type ReportDraft } from './draft';
 
 interface ReportDraftContextValue {
@@ -33,6 +34,7 @@ export function ReportDraftProvider({ userId, children }: { userId: string; chil
         );
       },
       discardDraft() {
+        if (draft) void deleteDraftEvidence(draft.clientRequestId);
         setDraft(null);
       },
     }),
