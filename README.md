@@ -15,12 +15,13 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phases 1–11 complete: project structure, design system and navigation,
+Phases 1–12 complete: project structure, design system and navigation,
 resident/staff authentication, the resident dashboard, the complete reporting
 flow (hazard type, incident details, location with GPS and map, photo/video
 evidence, review and submission), report details with status history, in-app
 notifications, the MDRRMO monitoring dashboard, report search, review and
-verification, and the disaster map.
+verification, the disaster map, and historical reports: importing past MDRRMO
+records, Incident Data Analysis (4.1) and CSV export.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
 the design system.
@@ -82,6 +83,26 @@ accounts use the password `BeaconDemo-2026`:
 | ---------------------------------- | -------------- |
 | `leona.legaspi@demo.beacon.local`  | Resident app   |
 | `mdrrmo.officer@demo.beacon.local` | MDRRMO console |
+
+`uv run python -m app.cli seed-demo-history` adds about 200 **invented** DEMO
+incident records (numbered `IMP-YYYY-NNNNNN`) so the Historical Reports page
+has something to analyse. Their seasonal patterns and locations are made up,
+not real MDRRMO data.
+
+### Importing MDRRMO records
+
+Past incidents from MDRRMO files are imported from CSV by an administrator.
+Start from [`docs/templates/mdrrmo_records_template.csv`](docs/templates/mdrrmo_records_template.csv)
+and delete its example rows. Nothing is saved if any row has a problem, and the
+command lists every problem by row:
+
+```bash
+cd backend
+uv run python -m app.cli import-records records.csv --by officer@example.gov.ph --dry-run
+uv run python -m app.cli import-records records.csv --by officer@example.gov.ph
+uv run python -m app.cli list-imports
+uv run python -m app.cli delete-import <batch id>   # undo an import
+```
 
 ### Checks
 

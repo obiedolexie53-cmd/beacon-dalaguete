@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models import HazardType, Report, User
+from app.models import HazardType, Report, ReportSource, User
 from app.reports.workflow import ReportStatus
 from app.staff.schemas import StaffStatusCounts
 
@@ -41,6 +41,9 @@ def recent_reports(db: Session, include_demo: bool, limit: int) -> list[Report]:
 class ReportFilters:
     q: str | None = None
     status: ReportStatus | None = None
+    #: Any of these statuses (used by historical analysis).
+    statuses: tuple[ReportStatus, ...] | None = None
+    source: ReportSource | None = None
     hazard: str | None = None
     barangay_id: int | None = None
     date_from: date | None = None
@@ -57,16 +60,21 @@ def filtered_reports(filters: ReportFilters) -> Select:
     stmt = select(Report)
     if filters.q:
         pattern = f"%{_escape_like(filters.q.strip())}%"
-        stmt = stmt.join(User, User.id == Report.reporter_id).where(
+        stmt = stmt.outerjoin(User, User.id == Report.reporter_id).where(
             or_(
                 Report.reference_no.ilike(pattern, escape="\\"),
                 Report.description.ilike(pattern, escape="\\"),
                 Report.landmark.ilike(pattern, escape="\\"),
+                Report.external_ref.ilike(pattern, escape="\\"),
                 User.full_name.ilike(pattern, escape="\\"),
             )
         )
     if filters.status:
         stmt = stmt.where(Report.status == filters.status)
+    if filters.statuses:
+        stmt = stmt.where(Report.status.in_(filters.statuses))
+    if filters.source:
+        stmt = stmt.where(Report.source == filters.source)
     if filters.hazard:
         stmt = stmt.join(HazardType, HazardType.id == Report.hazard_type_id).where(
             HazardType.code == filters.hazard

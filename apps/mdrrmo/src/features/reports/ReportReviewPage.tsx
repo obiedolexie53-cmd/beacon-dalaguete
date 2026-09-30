@@ -11,6 +11,7 @@ import {
   formatTimestamp,
   hazardLabel,
   type ReportStatus,
+  type ReporterInfo,
   type StaffReportDetail,
 } from '@beacon/shared';
 import {
@@ -26,6 +27,7 @@ import {
   TextAreaField,
   buttonClassName,
 } from '@beacon/ui';
+import { ImportedBadge } from './ImportedBadge';
 import { ReportLocationMap } from './ReportLocationMap';
 
 /** Button label and guidance for each status an officer can move a report to. */
@@ -108,7 +110,11 @@ export function ReportReviewPage() {
         <div className="m-review">
           <div className="m-review__side bcn-stack">
             <StatusPanel report={report} onUpdated={query.mutate} onReload={query.reload} />
-            <ReporterCard report={report} />
+            {report.reporter ? (
+              <ReporterCard reporter={report.reporter} />
+            ) : (
+              <ImportedRecordCard report={report} />
+            )}
           </div>
           <div className="m-review__main bcn-stack">
             <IncidentCard report={report} />
@@ -186,7 +192,9 @@ function StatusPanel({
 
       {done && (
         <Alert tone="success" title={`Status updated to ${REPORT_STATUS_LABELS[done]}`}>
-          The reporter has been notified.
+          {report.reporter
+            ? 'The reporter has been notified.'
+            : 'Saved to the status history. Imported records have no reporter to notify.'}
         </Alert>
       )}
       {error && (
@@ -219,7 +227,11 @@ function StatusPanel({
           )}
           <TextAreaField
             label={ACTIONS[action].noteRequired ? 'Note to the reporter' : 'Note (optional)'}
-            hint="The reporter can see this note."
+            hint={
+              report.reporter
+                ? 'The reporter can see this note.'
+                : 'Saved with the status history (imported record, no reporter).'
+            }
             required={ACTIONS[action].noteRequired}
             rows={3}
             maxLength={1000}
@@ -252,8 +264,7 @@ function StatusPanel({
   );
 }
 
-function ReporterCard({ report }: { report: StaffReportDetail }) {
-  const { reporter } = report;
+function ReporterCard({ reporter }: { reporter: ReporterInfo }) {
   return (
     <Card title="Reporter" className="bcn-stack">
       <dl className="m-detail-list">
@@ -289,6 +300,26 @@ function ReporterCard({ report }: { report: StaffReportDetail }) {
         Personal information. Use only to verify and respond to this report (Data Privacy Act of
         2012). Your access is recorded.
       </p>
+    </Card>
+  );
+}
+
+function ImportedRecordCard({ report }: { report: StaffReportDetail }) {
+  return (
+    <Card title="Source" className="bcn-stack">
+      <p style={{ margin: 0 }}>
+        <ImportedBadge />
+      </p>
+      <p style={{ margin: 0 }}>
+        Imported from MDRRMO records. It was not submitted through the resident app, so it has no
+        reporter and nobody is notified when its status changes.
+      </p>
+      <dl className="m-detail-list">
+        <dt>Original record number</dt>
+        <dd>{report.external_ref ?? 'Not given'}</dd>
+        <dt>Imported from</dt>
+        <dd>{report.import_filename ?? 'Unknown file'}</dd>
+      </dl>
     </Card>
   );
 }
@@ -331,9 +362,11 @@ function LocationCard({ report }: { report: StaffReportDetail }) {
             <>
               {report.latitude}, {report.longitude}
               <span className="m-cell-note">
-                {report.location_source === 'gps'
-                  ? `From the reporter's phone${report.location_accuracy_m ? `, accurate to about ${report.location_accuracy_m} m` : ''}`
-                  : 'Placed on the map by the reporter'}
+                {report.source === 'import'
+                  ? 'From the MDRRMO record'
+                  : report.location_source === 'gps'
+                    ? `From the reporter's phone${report.location_accuracy_m ? `, accurate to about ${report.location_accuracy_m} m` : ''}`
+                    : 'Placed on the map by the reporter'}
               </span>
             </>
           ) : (

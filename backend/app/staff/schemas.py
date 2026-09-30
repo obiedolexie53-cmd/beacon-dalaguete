@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.auth.schemas import BarangayOut
 from app.media.schemas import MediaOut
-from app.models import LocationSource
+from app.models import LocationSource, ReportSource
 from app.reports.schemas import HazardTypeOut
 from app.reports.workflow import ReportStatus
 
@@ -37,6 +37,8 @@ class StaffReportRow(BaseModel):
     submitted_at: datetime
     status: ReportStatus
     is_demo: bool
+    #: "resident" (submitted in the app) or "import" (from MDRRMO records).
+    source: ReportSource
 
 
 class StaffDashboard(BaseModel):
@@ -80,7 +82,11 @@ class StaffReportDetail(StaffReportRow):
     longitude: Decimal | None
     location_accuracy_m: int | None
     location_source: LocationSource | None
-    reporter: ReporterInfo
+    #: None for records imported from MDRRMO files, which have no BEACON reporter.
+    reporter: ReporterInfo | None
+    #: Record number in the original MDRRMO file, if it had one.
+    external_ref: str | None
+    import_filename: str | None
     timeline: list[StaffTimelineEntry]
     media: list[MediaOut]
     verified_at: datetime | None
@@ -117,6 +123,7 @@ class MapPoint(BaseModel):
     incident_time: time | None
     status: ReportStatus
     is_demo: bool
+    source: ReportSource
 
 
 class MapData(BaseModel):

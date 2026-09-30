@@ -109,4 +109,22 @@ describe('ApiClient', () => {
       fields: { phone: 'Invalid' },
     });
   });
+
+  it('downloads files with the suggested name and reports errors as usual', async () => {
+    const { client } = makeClient((url) =>
+      url.includes('export')
+        ? new Response('a,b\n1,2\n', {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/csv',
+              'Content-Disposition': 'attachment; filename="beacon-incidents.csv"',
+            },
+          })
+        : json(403, { error: { code: 'forbidden', message: 'Staff only' } }),
+    );
+    const file = await client.download('/staff/analysis/incidents/export');
+    expect(file.filename).toBe('beacon-incidents.csv');
+    expect(await file.blob.text()).toBe('a,b\n1,2\n');
+    await expect(client.download('/other')).rejects.toMatchObject({ code: 'forbidden' });
+  });
 });

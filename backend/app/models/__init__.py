@@ -6,9 +6,11 @@ from app.models.media import MediaKind, ReportMedia
 from app.models.notification import Notification
 from app.models.report import (
     HazardType,
+    ImportBatch,
     LocationSource,
     Report,
     ReportSequence,
+    ReportSource,
     ReportStatusHistory,
 )
 from app.models.user import RefreshToken, User, UserRole
@@ -17,6 +19,7 @@ __all__ = [
     "AuditLog",
     "Barangay",
     "HazardType",
+    "ImportBatch",
     "LocationSource",
     "MediaKind",
     "Notification",
@@ -24,6 +27,7 @@ __all__ = [
     "Report",
     "ReportMedia",
     "ReportSequence",
+    "ReportSource",
     "ReportStatusHistory",
     "User",
     "UserRole",

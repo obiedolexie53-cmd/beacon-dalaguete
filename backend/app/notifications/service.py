@@ -44,6 +44,8 @@ def notify(
 
 
 def notify_submitted(db: Session, report: Report) -> None:
+    if report.reporter_id is None:
+        return
     notify(
         db,
         report.reporter_id,
@@ -55,6 +57,8 @@ def notify_submitted(db: Session, report: Report) -> None:
 
 
 def notify_status_change(db: Session, report: Report, status: ReportStatus, note: str | None):
+    if report.reporter_id is None:  # imported MDRRMO record: nobody to notify
+        return
     title, body = STATUS_MESSAGES[status]
     text = body.format(ref=report.reference_no)
     if note:

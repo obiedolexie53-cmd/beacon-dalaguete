@@ -3,6 +3,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { AuthProvider } from '@beacon/auth';
 import {
   ApiClient,
+  type IncidentAnalysis,
   type MapData,
   type MapPoint,
   type SessionResponse,
@@ -52,6 +53,7 @@ export function makeRow(overrides: Partial<StaffReportRow> = {}): StaffReportRow
     submitted_at: '2026-09-30T06:20:00Z',
     status: 'submitted',
     is_demo: false,
+    source: 'resident',
     ...overrides,
   };
 }
@@ -98,6 +100,8 @@ export function makeDetail(overrides: Partial<StaffReportDetail> = {}): StaffRep
     longitude: '123.534900',
     location_accuracy_m: 12,
     location_source: 'gps',
+    external_ref: null,
+    import_filename: null,
     reporter: {
       id: 'u2',
       full_name: 'Maria Santos',
@@ -140,6 +144,7 @@ export function makePoint(overrides: Partial<MapPoint> = {}): MapPoint {
     incident_time: '14:05:00',
     status: 'needs_clarification',
     is_demo: false,
+    source: 'resident',
     ...overrides,
   };
 }
@@ -171,6 +176,60 @@ export const BARANGAYS = [
   { id: 28, name: 'Poblacion' },
 ];
 
+export function makeAnalysis(overrides: Partial<IncidentAnalysis> = {}): IncidentAnalysis {
+  const months = ['2025-09', '2025-10', '2025-11'];
+  return {
+    filters: {
+      scope: 'confirmed',
+      statuses: ['verified', 'resolved'],
+      hazard: null,
+      barangay_id: null,
+      source: null,
+      date_from: null,
+      date_to: null,
+      include_demo: true,
+    },
+    dataset: {
+      total: 5,
+      from_app: 1,
+      imported: 4,
+      demo: 4,
+      with_coordinates: 3,
+      with_time: 4,
+      first_incident: '2025-09-03',
+      last_incident: '2025-11-20',
+    },
+    by_hazard: [
+      { code: 'landslide', name: 'Landslide', count: 3, share: 0.6 },
+      { code: 'flood', name: 'Flood', count: 2, share: 0.4 },
+    ],
+    by_barangay: [
+      {
+        id: 23,
+        name: 'Mantalongon',
+        count: 3,
+        share: 0.6,
+        top_hazard: 'landslide',
+        top_hazard_count: 3,
+      },
+      { id: 28, name: 'Poblacion', count: 2, share: 0.4, top_hazard: 'flood', top_hazard_count: 2 },
+    ],
+    without_barangay: 0,
+    by_month: months.map((month, i) => ({ month, count: [2, 0, 3][i]! })),
+    by_month_of_year: Array.from({ length: 12 }, (_, i) => ({
+      key: i + 1,
+      count: i === 8 ? 2 : i === 10 ? 3 : 0,
+    })),
+    by_hour: Array.from({ length: 24 }, (_, h) => ({ key: h, count: h === 16 ? 4 : 0 })),
+    unknown_time: 1,
+    by_weekday: Array.from({ length: 7 }, (_, d) => ({ key: d + 1, count: d === 2 ? 5 : 0 })),
+    hazard_by_barangay: [],
+    hazard_by_month_of_year: [],
+    generated_at: '2026-09-30T06:00:00Z',
+    ...overrides,
+  };
+}
+
 type Override = (init?: RequestInit) => Response | Promise<Response>;
 
 export function signedInWith(overrides: Record<string, Override> = {}): Handler {
@@ -190,6 +249,7 @@ export function signedInWith(overrides: Record<string, Override> = {}): Handler 
       return json(200, { items, total: items.length, limit: 20, offset: 0 });
     }
     if (path === '/staff/reports/BEA-2026-000125') return json(200, makeDetail());
+    if (path.startsWith('/staff/analysis/incidents?')) return json(200, makeAnalysis());
     return json(404, {});
   };
 }

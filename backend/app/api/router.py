@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.analysis.router import router as analysis_router
 from app.api import health
 from app.auth.router import me_router, resident_auth_router, staff_auth_router
 from app.locations.router import router as locations_router
@@ -26,3 +27,4 @@ api_router.include_router(notifications_router)
 api_router.include_router(staff_router)
 api_router.include_router(staff_reports_router)
 api_router.include_router(staff_map_router)
+api_router.include_router(analysis_router)

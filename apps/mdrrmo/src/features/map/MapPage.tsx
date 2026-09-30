@@ -30,6 +30,7 @@ import {
   ReportFilterFields,
   useReportFilters,
 } from '../reports/ReportFilters';
+import { ImportedBadge } from '../reports/ImportedBadge';
 import { DisasterMap } from './DisasterMap';
 
 export function MapPage() {
@@ -144,6 +145,7 @@ function SelectedReport({ point, onClose }: { point: MapPoint; onClose: () => vo
           <strong>{hazardLabel(point)}</strong>
           <div className="m-ref-cell">
             {point.reference_no}
+            {point.source === 'import' && <ImportedBadge />}
             {point.is_demo && <DemoBadge>DEMO</DemoBadge>}
           </div>
         </div>
@@ -247,6 +249,7 @@ function MapList({
                   <td>
                     <span className="m-ref-cell">
                       {point.reference_no}
+                      {point.source === 'import' && <ImportedBadge />}
                       {point.is_demo && <DemoBadge>DEMO</DemoBadge>}
                     </span>
                   </td>

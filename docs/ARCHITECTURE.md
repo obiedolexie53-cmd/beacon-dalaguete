@@ -366,6 +366,53 @@ status_changed`) instead of silently overwriting it. The report row is locked
 - Overlapping reports at the same spot are drawn on top of each other. Marker
   clustering can be added if dense areas become hard to read.
 
+**Implementation notes (Phase 12):**
+
+- **Two sources of records.** `reports.source` is `resident` (submitted in the
+  app) or `import` (from MDRRMO files). Imported records have no reporter
+  (`reporter_id` is null; a check constraint requires a reporter for resident
+  reports). They are grouped in `import_batches` and carry the MDRRMO's own
+  record number in `external_ref`. They use their own reference counter,
+  `IMP-YYYY-NNNNNN`, so they never take numbers from `BEA-` reports
+  (`report_sequences` is keyed by prefix and year). Status changes on imported
+  records are recorded as usual but notify nobody.
+- **CSV import** is an administrator command, not a web upload:
+  `python -m app.cli import-records FILE --by STAFF_EMAIL [--dry-run]`. Every
+  row is checked first and problems are listed by row and column. The import is
+  all or nothing. Records are numbered in date order and each gets a status
+  history entry saying which file it came from. A record number already
+  imported is refused, so a file cannot be imported twice. `list-imports` and
+  `delete-import BATCH_ID` show and undo imports. The template is
+  [`docs/templates/mdrrmo_records_template.csv`](templates/mdrrmo_records_template.csv).
+  Accepted columns: `date` (YYYY-MM-DD or MM/DD/YYYY), `time` (optional),
+  `hazard` (code or name), `other_hazard` (required for Other Hazard),
+  `barangay`, `description`, `landmark`, `latitude`/`longitude` (optional,
+  together), `status` (Verified or Resolved, default Resolved), `external_ref`.
+- **DEMO history.** `python -m app.cli seed-demo-history [--months 24]
+[--seed 1] [--replace]` (refused in production) generates about 200
+  **invented** records as one DEMO import batch. The seasonal patterns (rainy
+  season June to December, typhoons July to November with related floods and
+  landslides, landslides in upland barangays, floods and storm surge near the
+  coast, more fires in March to May) and the barangay positions (upland west,
+  coastal east) are made up for trying out the analysis. They are **not** real
+  MDRRMO data or real barangay locations, and must be replaced with real
+  records before any evaluation. The output is the same for the same seed and
+  end date.
+- **4.1 Incident Data Analysis.** `GET /api/v1/staff/analysis/incidents`
+  counts matching records by hazard (with share), barangay (with its most
+  recorded hazard), month (every month in the period), month of the year, hour
+  of day (plus records with no time), weekday, hazard × barangay and hazard ×
+  month of year. By default it counts reports MDRRMO verified or resolved
+  (`scope=confirmed`); `scope=all` includes unverified ones. Filters: dates,
+  hazard, barangay, source and demo. The output is descriptive only. The console
+  page words its summary as "was recorded" or "fell in", never as a forecast.
+- **CSV export.** `GET /api/v1/staff/analysis/incidents/export` returns the
+  matching records with the same filters. It leaves out reporter details and
+  the free-text description, which can contain personal information. Cells
+  starting with `= + - @` are prefixed with `'` so spreadsheets do not run them
+  as formulas. Each export is written to the audit log (`reports.exported`)
+  with its filters and row count.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 
@@ -376,7 +423,8 @@ submitted ──► under_verification ──► verified ──► resolved
 ```
 
 Only `mdrrmo` or `admin` users can change a report's status. Each change writes
-a `report_status_history` row and a notification to the reporter.
+a `report_status_history` row and a notification to the reporter (imported
+MDRRMO records have no reporter, so no notification).
 
 ---
 
@@ -489,7 +537,7 @@ MDRRMO assessment.
 | 9   | MDRRMO dashboard                    | counts, recent reports table                                                |
 | 10  | Review & verification               | detail view, media viewer, status workflow + history                        |
 | 11  | Disaster map                        | Leaflet map, filters, marker summaries                                      |
-| 12  | Historical report analysis          | historical browsing, 4.1 aggregations                                       |
+| 12  | Historical report analysis          | record import, DEMO history, 4.1 aggregations, CSV export                   |
 | 13  | ML-assisted pattern analysis        | 4.2 clustering/frequency/trend module + tests                               |
 | 14  | Pattern visualization               | 4.3 charts, heatmaps, hotspot layer                                         |
 | 15  | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states          |

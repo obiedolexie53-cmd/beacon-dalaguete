@@ -222,6 +222,44 @@ describe('report review', () => {
     expect(screen.getByText(/does not prove on its own that the incident is genuine/)).toBeTruthy();
   });
 
+  it('shows the source of imported MDRRMO records instead of a reporter', async () => {
+    renderApp(
+      `/reports/${REF}`,
+      signedInWith({
+        [path]: () =>
+          json(
+            200,
+            makeDetail({
+              source: 'import',
+              reporter: null,
+              external_ref: 'MDRRMO-2025-0142',
+              import_filename: 'records-2025.csv',
+              location_source: null,
+              status: 'verified',
+              allowed_actions: ['resolved'],
+              timeline: [
+                {
+                  status: 'verified',
+                  changed_at: '2026-09-30T06:20:00Z',
+                  by_role: 'mdrrmo',
+                  actor_name: 'Juan Dela Cruz',
+                  note: 'Imported from MDRRMO records (records-2025.csv).',
+                },
+              ],
+            }),
+          ),
+      }),
+    );
+    const source = (await screen.findByRole('heading', { name: 'Source' })).parentElement!;
+    expect(within(source).getByText('Imported')).toBeTruthy();
+    expect(within(source).getByText('MDRRMO-2025-0142')).toBeTruthy();
+    expect(within(source).getByText('records-2025.csv')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Reporter' })).toBeNull();
+    expect(screen.getByText('From the MDRRMO record')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as Resolved' }));
+    expect(screen.getByText(/imported record, no reporter/)).toBeTruthy();
+  });
+
   it('shows "Report not found" for unknown references', async () => {
     renderApp(
       '/reports/BEA-2026-999999',

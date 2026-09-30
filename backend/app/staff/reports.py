@@ -100,18 +100,24 @@ def _detail(db: DbSession, report: Report) -> StaffReportDetail:
         longitude=report.longitude,
         location_accuracy_m=report.location_accuracy_m,
         location_source=report.location_source,
+        external_ref=report.external_ref,
         reporter=ReporterInfo(
             id=reporter.id,
             full_name=reporter.full_name,
             email=reporter.email,
             phone=reporter.phone,
             barangay=BarangayOut.model_validate(reporter.barangay) if reporter.barangay else None,
-        ),
+        )
+        if reporter
+        else None,
+        import_filename=report.import_batch.filename if report.import_batch else None,
         timeline=[
             StaffTimelineEntry(
                 status=h.to_status,
                 changed_at=h.changed_at,
-                by_role="resident" if h.changed_by_id == report.reporter_id else "mdrrmo",
+                by_role="resident"
+                if report.reporter_id and h.changed_by_id == report.reporter_id
+                else "mdrrmo",
                 actor_name=names.get(h.changed_by_id),
                 note=h.note,
             )

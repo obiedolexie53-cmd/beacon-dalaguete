@@ -6,6 +6,7 @@ import {
   type StaffReportRow,
 } from '@beacon/shared';
 import { DemoBadge, HazardIcon, StatusBadge } from '@beacon/ui';
+import { ImportedBadge } from './ImportedBadge';
 
 /** Report rows used on the dashboard and the Reports page. */
 export function ReportsTable({ rows, caption }: { rows: StaffReportRow[]; caption: string }) {
@@ -31,6 +32,7 @@ export function ReportsTable({ rows, caption }: { rows: StaffReportRow[]; captio
               <td>
                 <span className="m-ref-cell">
                   {row.reference_no}
+                  {row.source === 'import' && <ImportedBadge />}
                   {row.is_demo && <DemoBadge>DEMO</DemoBadge>}
                 </span>
               </td>

@@ -157,7 +157,11 @@ export interface StaffReportRow {
   submitted_at: string;
   status: ReportStatus;
   is_demo: boolean;
+  /** 'resident': submitted in the app. 'import': from MDRRMO records. */
+  source: ReportSource;
 }
+
+export type ReportSource = 'resident' | 'import';
 
 export interface StaffDashboard {
   counts: StaffStatusCounts;
@@ -198,7 +202,10 @@ export interface StaffReportDetail extends StaffReportRow {
   longitude: string | null;
   location_accuracy_m: number | null;
   location_source: 'gps' | 'map_pin' | 'manual' | null;
-  reporter: ReporterInfo;
+  /** Null for records imported from MDRRMO files (they have no BEACON reporter). */
+  reporter: ReporterInfo | null;
+  external_ref: string | null;
+  import_filename: string | null;
   timeline: StaffTimelineEntry[];
   media: MediaItem[];
   verified_at: string | null;
@@ -223,10 +230,62 @@ export interface MapPoint {
   incident_time: string | null;
   status: ReportStatus;
   is_demo: boolean;
+  source: ReportSource;
 }
 
 export interface MapData {
   points: MapPoint[];
   without_location: number;
   truncated: boolean;
+}
+
+/** 4.1 Incident Data Analysis: descriptive counts of recorded incidents. */
+export type AnalysisScope = 'confirmed' | 'all';
+
+export interface IndexedCount {
+  /** Month of year 1–12, hour 0–23, or ISO weekday 1 (Monday)–7 (Sunday). */
+  key: number;
+  count: number;
+}
+
+export interface IncidentAnalysis {
+  filters: {
+    scope: AnalysisScope;
+    statuses: ReportStatus[];
+    hazard: string | null;
+    barangay_id: number | null;
+    source: ReportSource | null;
+    date_from: string | null;
+    date_to: string | null;
+    include_demo: boolean;
+  };
+  dataset: {
+    total: number;
+    from_app: number;
+    imported: number;
+    demo: number;
+    with_coordinates: number;
+    with_time: number;
+    first_incident: string | null;
+    last_incident: string | null;
+  };
+  by_hazard: Array<{ code: string; name: string; count: number; share: number }>;
+  by_barangay: Array<{
+    id: number;
+    name: string;
+    count: number;
+    share: number;
+    top_hazard: string;
+    top_hazard_count: number;
+  }>;
+  without_barangay: number;
+  /** Every month in the period ("YYYY-MM"), including months with no records. */
+  by_month: Array<{ month: string; count: number }>;
+  by_month_of_year: IndexedCount[];
+  by_hour: IndexedCount[];
+  unknown_time: number;
+  by_weekday: IndexedCount[];
+  hazard_by_barangay: Array<{ hazard: string; barangay_id: number; count: number }>;
+  hazard_by_month_of_year: Array<{ hazard: string; month_of_year: number; count: number }>;
+  generated_at: string;
 }

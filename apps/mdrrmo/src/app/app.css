@@ -590,3 +590,136 @@
   cursor: pointer;
   font: inherit;
 }
+
+/* ----- Historical reports (4.1 Incident Data Analysis) ----- */
+.m-section-title {
+  margin: 0;
+  font-size: var(--bcn-text-lg);
+  color: var(--bcn-navy-900);
+}
+.m-card-hint {
+  margin: 0 0 var(--bcn-space-3);
+  color: var(--bcn-text-muted);
+  font-size: var(--bcn-text-sm);
+}
+.m-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--bcn-space-5);
+  align-items: start;
+}
+.m-findings {
+  margin: 0 0 var(--bcn-space-3);
+  padding-left: var(--bcn-space-5);
+  display: grid;
+  gap: var(--bcn-space-2);
+}
+.m-export {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--bcn-space-1);
+  text-align: right;
+}
+.m-export__error {
+  color: var(--bcn-danger-600);
+  font-size: var(--bcn-text-xs);
+  font-weight: 600;
+}
+.m-table--compact {
+  min-width: 0;
+}
+.m-table--compact tbody th {
+  font-weight: 600;
+  color: var(--bcn-text);
+  white-space: normal;
+  border-bottom: 1px solid var(--bcn-border);
+}
+.m-table--compact tr:last-child th {
+  border-bottom: none;
+}
+.m-num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.m-share {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  min-width: 120px;
+}
+.m-share__track {
+  flex: 1;
+  height: 10px;
+  border-radius: var(--bcn-radius-pill);
+  background: var(--bcn-bg);
+}
+.m-share__bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--bcn-radius-pill);
+  background: var(--bcn-blue-600);
+}
+.m-share__value {
+  width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--bcn-text-muted);
+}
+.m-chart {
+  margin: 0;
+}
+.m-chart__scroll {
+  overflow-x: auto;
+}
+.m-chart__plot {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 180px;
+  padding-top: var(--bcn-space-1);
+}
+.m-chart__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+  position: relative;
+  padding-bottom: 22px;
+}
+.m-chart__value {
+  font-size: var(--bcn-text-xs);
+  color: var(--bcn-text-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.m-chart__bar {
+  width: 100%;
+  max-width: 40px;
+  border-radius: 3px 3px 0 0;
+  background: var(--bcn-blue-600);
+}
+.m-chart__bar[data-zero] {
+  height: 0 !important;
+}
+.m-chart__col::after {
+  /* Baseline under the bars, above the labels. */
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 22px;
+  border-bottom: 1px solid var(--bcn-border);
+}
+.m-chart__label {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  line-height: 18px;
+  font-size: var(--bcn-text-xs);
+  color: var(--bcn-text-muted);
+  white-space: nowrap;
+}

@@ -4,6 +4,10 @@
     uv run python -m app.cli create-staff --email admin@example.gov.ph --name "..." --role admin
     uv run python -m app.cli set-staff-active --email officer@example.gov.ph --inactive
     uv run python -m app.cli seed-demo          # development/test only
+    uv run python -m app.cli seed-demo-history  # development/test only
+    uv run python -m app.cli import-records records.csv --by officer@example.gov.ph --dry-run
+    uv run python -m app.cli list-imports
+    uv run python -m app.cli delete-import BATCH_ID
 
 This is the only way to create MDRRMO accounts: there is no public staff
 registration. Passwords are typed at a hidden prompt (or piped with
@@ -14,8 +18,10 @@ them in shell history.
 import argparse
 import getpass
 import sys
+import uuid
 from collections.abc import Sequence
-from datetime import timedelta
+from datetime import date, timedelta
+from pathlib import Path
 
 from email_validator import EmailNotValidError, validate_email
 from sqlalchemy import select
@@ -26,9 +32,17 @@ from app.auth.validation import check_password_strength
 from app.core.config import get_settings
 from app.core.db import get_engine
 from app.core.security import hash_password
+from app.imports.records import RowError, read_records
+from app.imports.service import (
+    delete_batch,
+    existing_external_refs,
+    load_lookups,
+    save_records,
+)
 from app.models import (
     Barangay,
     HazardType,
+    ImportBatch,
     Notification,
     Report,
     ReportStatusHistory,
@@ -37,7 +51,9 @@ from app.models import (
 )
 from app.notifications.service import STATUS_MESSAGES
 from app.reports.reference import reserve_reference_number
+from app.reports.validation import local_now
 from app.reports.workflow import ReportStatus
+from seeds.demo_history import DEFAULT_SEED, DEMO_HISTORY_FILENAME, generate_demo_history
 from seeds.demo_reports import DEMO_REPORTS
 
 DEMO_PASSWORD = "BeaconDemo-2026"  # noqa: S105  (development/test demo accounts only)
@@ -232,6 +248,105 @@ def _seed_demo_reports(db: Session) -> list[str]:
     return created
 
 
+#: Largest CSV file accepted by import-records.
+MAX_IMPORT_BYTES = 20 * 1024 * 1024
+
+
+class ImportFailed(CliError):
+    def __init__(self, errors: list[RowError]):
+        super().__init__(f"{len(errors)} problem(s) found; nothing was imported")
+        self.errors = errors
+
+
+def _active_staff(db: Session, email: str) -> User:
+    user = db.scalar(select(User).where(User.email == email.strip().lower()))
+    if user is None or not user.is_staff or not user.is_active:
+        raise CliError(f"No active staff account with email {email}")
+    return user
+
+
+def import_records(
+    db: Session, path: Path, *, by_email: str, dry_run: bool = False
+) -> ImportBatch | int:
+    """Import incident records from an MDRRMO CSV file, all or nothing.
+
+    Returns the saved batch, or with dry_run the number of valid records.
+    """
+    staff = _active_staff(db, by_email)
+    if not path.is_file():
+        raise CliError(f"File not found: {path}")
+    if path.stat().st_size > MAX_IMPORT_BYTES:
+        raise CliError("The file is larger than 20 MB; split it into smaller files")
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise CliError("The file must be saved as CSV UTF-8") from exc
+    rows, errors = read_records(text, load_lookups(db))
+    errors += existing_external_refs(db, rows)
+    if errors:
+        raise ImportFailed(sorted(errors, key=lambda e: e.row_number))
+    if dry_run:
+        return len(rows)
+    batch = save_records(db, rows, filename=path.name, imported_by_id=staff.id)
+    db.commit()
+    return batch
+
+
+def list_imports(db: Session) -> list[ImportBatch]:
+    return list(db.scalars(select(ImportBatch).order_by(ImportBatch.imported_at.desc())))
+
+
+def delete_import(db: Session, batch_id: str) -> int:
+    try:
+        parsed = uuid.UUID(batch_id)
+    except ValueError as exc:
+        raise CliError(f"Not an import batch ID: {batch_id}") from exc
+    try:
+        count = delete_batch(db, parsed)
+    except LookupError as exc:
+        raise CliError(str(exc)) from exc
+    db.commit()
+    return count
+
+
+def _end_of_last_month() -> date:
+    return local_now().date().replace(day=1) - timedelta(days=1)
+
+
+def seed_demo_history(
+    db: Session,
+    *,
+    months: int = 24,
+    seed: int = DEFAULT_SEED,
+    end: date | None = None,
+    replace: bool = False,
+) -> ImportBatch | None:
+    """Generate invented DEMO incident history. Returns None if it already exists."""
+    if get_settings().environment == "production":
+        raise CliError("Demo history cannot be created in production")
+    if not 1 <= months <= 120:
+        raise CliError("--months must be between 1 and 120")
+    existing = db.scalars(
+        select(ImportBatch.id).where(
+            ImportBatch.is_demo.is_(True), ImportBatch.filename == DEMO_HISTORY_FILENAME
+        )
+    ).all()
+    if existing and not replace:
+        return None
+    for batch_id in existing:
+        delete_batch(db, batch_id)
+    officer_id = db.scalar(select(User.id).where(User.email == DEMO_ACCOUNTS[1][1]))
+    barangays = list(db.scalars(select(Barangay.name).order_by(Barangay.name)))
+    rows = generate_demo_history(
+        load_lookups(db), barangays, end=end or _end_of_last_month(), months=months, seed=seed
+    )
+    batch = save_records(
+        db, rows, filename=DEMO_HISTORY_FILENAME, imported_by_id=officer_id, is_demo=True
+    )
+    db.commit()
+    return batch
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -249,6 +364,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     group.add_argument("--inactive", dest="active", action="store_false")
 
     commands.add_parser("seed-demo", help="Create fictional DEMO accounts (not in production)")
+
+    history = commands.add_parser(
+        "seed-demo-history", help="Generate invented DEMO incident history (not in production)"
+    )
+    history.add_argument("--months", type=int, default=24)
+    history.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    history.add_argument("--replace", action="store_true", help="Regenerate if it exists")
+
+    imp = commands.add_parser("import-records", help="Import incident records from a CSV file")
+    imp.add_argument("file", type=Path)
+    imp.add_argument("--by", required=True, help="Email of the staff account doing the import")
+    imp.add_argument("--dry-run", action="store_true", help="Check the file without saving")
+
+    commands.add_parser("list-imports", help="List imported record batches")
+    delete_cmd = commands.add_parser("delete-import", help="Remove an import and its records")
+    delete_cmd.add_argument("batch_id")
 
     args = parser.parse_args(argv)
     try:
@@ -271,6 +402,37 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for item in created:
                     print(f"Created DEMO record {item}")
                 print(f"Demo password: {DEMO_PASSWORD}" if created else "Demo accounts exist")
+            elif args.command == "seed-demo-history":
+                batch = seed_demo_history(
+                    db, months=args.months, seed=args.seed, replace=args.replace
+                )
+                if batch is None:
+                    print("Demo history exists (use --replace to regenerate it)")
+                else:
+                    print(f"Created {batch.row_count} DEMO history records (batch {batch.id})")
+            elif args.command == "import-records":
+                result = import_records(db, args.file, by_email=args.by, dry_run=args.dry_run)
+                if isinstance(result, int):
+                    print(f"{result} records are valid. Nothing was saved (dry run).")
+                else:
+                    print(f"Imported {result.row_count} records (batch {result.id})")
+                    print(f"To undo: python -m app.cli delete-import {result.id}")
+            elif args.command == "list-imports":
+                for batch in list_imports(db):
+                    demo = " [DEMO]" if batch.is_demo else ""
+                    print(
+                        f"{batch.id}  {batch.imported_at:%Y-%m-%d %H:%M}  "
+                        f"{batch.row_count:>6} records  {batch.filename}{demo}"
+                    )
+            elif args.command == "delete-import":
+                print(f"Removed {delete_import(db, args.batch_id)} imported records")
+    except ImportFailed as exc:
+        for error in exc.errors[:200]:
+            print(error, file=sys.stderr)
+        if len(exc.errors) > 200:
+            print(f"... and {len(exc.errors) - 200} more", file=sys.stderr)
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
     except CliError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

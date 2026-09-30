@@ -29,6 +29,16 @@ export interface ApiClientOptions {
   fetch?: typeof fetch;
 }
 
+export interface DownloadedFile {
+  blob: Blob;
+  filename: string | null;
+}
+
+function filenameFrom(headers: Headers): string | null {
+  const match = /filename="([^"]+)"/.exec(headers.get('Content-Disposition') ?? '');
+  return match?.[1] ?? null;
+}
+
 type SessionListener = (session: SessionResponse | null) => void;
 
 const REFRESH_LOCK = 'beacon-session-refresh';
@@ -64,6 +74,11 @@ export class ApiClient {
 
   post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>('POST', path, body);
+  }
+
+  /** A file download (e.g. a CSV export), with the file name the server suggests. */
+  download(path: string): Promise<DownloadedFile> {
+    return this.request<DownloadedFile>('GET', path, undefined, { download: true });
   }
 
   /** Multipart upload (e.g. a photo). The browser sets the multipart boundary header. */
@@ -139,7 +154,11 @@ export class ApiClient {
     method: string,
     path: string,
     body?: unknown,
-    { auth = true, retried = false }: { auth?: boolean; retried?: boolean } = {},
+    {
+      auth = true,
+      retried = false,
+      download = false,
+    }: { auth?: boolean; retried?: boolean; download?: boolean } = {},
   ): Promise<T> {
     const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
     const headers: Record<string, string> = { Accept: 'application/json' };
@@ -160,10 +179,18 @@ export class ApiClient {
 
     if (response.status === 401 && auth && !retried) {
       const session = await this.refresh();
-      if (session) return this.request<T>(method, path, body, { auth, retried: true });
+      if (session) return this.request<T>(method, path, body, { auth, retried: true, download });
     }
 
     if (response.status === 204) return undefined as T;
+    if (download && response.ok) {
+      try {
+        const blob = await response.blob();
+        return { blob, filename: filenameFrom(response.headers) } as T;
+      } catch {
+        throw new ApiError(0, 'network_error', NETWORK_ERROR_MESSAGE);
+      }
+    }
 
     const data: unknown = await response.json().catch(() => null);
     if (!response.ok) {
