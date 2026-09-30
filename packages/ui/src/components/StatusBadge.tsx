@@ -18,6 +18,11 @@ const STATUS_STYLE: Record<ReportStatus, { tone: BadgeTone; Icon: LucideIcon }> 
   resolved: { tone: 'resolved', Icon: CircleCheckBig },
 };
 
+/** The icon that stands for each status (badges, map markers, legends). */
+export function statusIconFor(status: ReportStatus): LucideIcon {
+  return STATUS_STYLE[status].Icon;
+}
+
 export function StatusBadge({ status }: { status: ReportStatus }) {
   const { tone, Icon } = STATUS_STYLE[status];
   return (

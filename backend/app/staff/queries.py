@@ -52,11 +52,8 @@ def _escape_like(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def search_reports(
-    db: Session, filters: ReportFilters, *, limit: int, offset: int
-) -> tuple[list[Report], int]:
-    """Staff report search. Text search covers reference number, description, landmark
-    and reporter name; the other filters are exact."""
+def filtered_reports(filters: ReportFilters) -> Select:
+    """SELECT of reports matching the staff filters (shared by the list and the map)."""
     stmt = select(Report)
     if filters.q:
         pattern = f"%{_escape_like(filters.q.strip())}%"
@@ -80,8 +77,15 @@ def search_reports(
         stmt = stmt.where(Report.incident_date >= filters.date_from)
     if filters.date_to:
         stmt = stmt.where(Report.incident_date <= filters.date_to)
-    stmt = scoped(stmt, filters.include_demo)
+    return scoped(stmt, filters.include_demo)
 
+
+def search_reports(
+    db: Session, filters: ReportFilters, *, limit: int, offset: int
+) -> tuple[list[Report], int]:
+    """Staff report search. Text search covers reference number, description, landmark
+    and reporter name; the other filters are exact."""
+    stmt = filtered_reports(filters)
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     items = db.scalars(
         stmt.order_by(Report.submitted_at.desc(), Report.reference_no.desc())
@@ -89,3 +93,15 @@ def search_reports(
         .offset(offset)
     ).all()
     return list(items), total
+
+
+def map_reports(
+    db: Session, filters: ReportFilters, *, limit: int
+) -> tuple[list[Report], int, bool]:
+    """Reports with coordinates for the map, plus how many matching reports have none."""
+    stmt = filtered_reports(filters)
+    located = stmt.where(Report.latitude.is_not(None), Report.longitude.is_not(None))
+    unlocated = stmt.where(or_(Report.latitude.is_(None), Report.longitude.is_(None)))
+    without_location = db.scalar(select(func.count()).select_from(unlocated.subquery())) or 0
+    points = list(db.scalars(located.order_by(Report.submitted_at.desc()).limit(limit + 1)))
+    return points[:limit], without_location, len(points) > limit

@@ -209,3 +209,24 @@ export interface StaffReportDetail extends StaffReportRow {
   resolution_notes: string | null;
   allowed_actions: ReportStatus[];
 }
+
+export interface MapPoint {
+  reference_no: string;
+  latitude: string;
+  longitude: string;
+  location_accuracy_m: number | null;
+  hazard_type: HazardType;
+  other_hazard_text: string | null;
+  barangay: Barangay | null;
+  landmark: string | null;
+  incident_date: string;
+  incident_time: string | null;
+  status: ReportStatus;
+  is_demo: boolean;
+}
+
+export interface MapData {
+  points: MapPoint[];
+  without_location: number;
+  truncated: boolean;
+}

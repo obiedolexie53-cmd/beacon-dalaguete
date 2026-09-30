@@ -35,6 +35,22 @@ Each status has a colour **and** an icon, so it is never conveyed by colour alon
 | Verified                               | green   | shield check |
 | Resolved                               | navy    | check circle |
 
+## Map marker colours (status)
+
+| Status                                 | Marker    | Icon on marker |
+| -------------------------------------- | --------- | -------------- |
+| Submitted                              | `#b8860b` | send           |
+| Under Verification                     | `#2563eb` | search         |
+| For Verification / Needs Clarification | `#d23a2a` | help circle    |
+| Verified                               | `#15924a` | shield check   |
+| Resolved                               | `#6b7280` | check circle   |
+
+These are `statusMarkerColors` in `@beacon/ui`. They were validated with the
+dataviz palette validator: all pairs are distinct for normal colour vision.
+Resolved is a deliberate neutral grey, so finished reports recede. Because no
+five-colour set keeps every pair apart for colour-blind viewers, markers always
+carry the status icon, and the legend and marker labels give the status in words.
+
 ## Accessibility rules
 
 - Touch targets are at least **48 × 48 px** (`--bcn-touch-target`).

@@ -23,6 +23,11 @@ const HAZARD_ICONS: Record<string, LucideIcon> = {
   other: TriangleAlert,
 };
 
+/** Icon component for a hazard type code. Unknown codes (e.g. hazards added later) get the generic icon. */
+export function hazardIconFor(code: string): LucideIcon {
+  return HAZARD_ICONS[code] ?? TriangleAlert;
+}
+
 /** Icon for a hazard type code. Unknown codes (e.g. hazards added later) use the generic icon. */
 export function HazardIcon({ code, size = 40 }: { code: string; size?: number }) {
   const Icon = HAZARD_ICONS[code] ?? TriangleAlert;

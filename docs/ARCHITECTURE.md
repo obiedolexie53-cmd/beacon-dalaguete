@@ -224,8 +224,8 @@ analysis_runs                      -- cached ML results for reproducibility
   `BEA-2026-000123`) are reserved, so real reports never reuse them.
 - `incident_date` / `incident_time` are the local time in Dalaguete
   (Asia/Manila). `submitted_at` is a UTC timestamp shown in Philippine time.
-- Coordinates are stored as `latitude` / `longitude` numerics for now. A PostGIS
-  `geography` column and spatial index are added with the disaster map (Phase 11).
+- Coordinates are stored as `latitude` / `longitude` numerics. See the Phase 11
+  notes for why no PostGIS `geography` column was added.
 
 **Implementation notes (Phase 5):**
 
@@ -343,6 +343,28 @@ status_changed`) instead of silently overwriting it. The report row is locked
   Invalid/Duplicate status, and in-app replies from residents to
   clarification requests. Residents are asked to contact the MDRRMO. Both can
   be added without changing the existing workflow.
+
+**Implementation notes (Phase 11):**
+
+- `GET /api/v1/staff/map/reports` returns the located reports that match the
+  same filters as the Reports list (status, hazard, barangay, incident dates,
+  demo). It carries no reporter details and caps results at 5,000 points (with
+  a `truncated` flag). It also counts matching reports that have no
+  coordinates, which the map lists as "no map pin" with a link to them.
+- **Markers** use the status colour with the hazard icon inside and a small
+  status icon badge. The status colours were checked with the dataviz palette
+  validator (all pairs pass for normal vision). For colour-blind viewers, no
+  five-colour set separates every pair on a map, so status is never shown by
+  colour alone: markers carry the status icon, each marker's accessible name
+  states hazard, status and barangay, and there is a legend, a status filter
+  and a list view. Markers are keyboard-focusable (Tab, then Enter or Space).
+- **No PostGIS `geography` column (a deliberate deviation from §4):** at the
+  scale of one municipality (thousands of reports), filtering on the existing
+  columns and drawing every point is fast, so a spatial column and index would
+  add complexity without benefit. PostGIS stays enabled and can be added if
+  bounding-box queries or larger areas are needed.
+- Overlapping reports at the same spot are drawn on top of each other. Marker
+  clustering can be added if dense areas become hard to read.
 
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):

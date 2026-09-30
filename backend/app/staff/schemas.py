@@ -98,3 +98,30 @@ class StatusChangeRequest(BaseModel):
     #: The status the officer saw; if it changed meanwhile, the update is refused.
     from_status: ReportStatus
     note: str | None = Field(default=None, max_length=1000)
+
+
+class MapPoint(BaseModel):
+    """One report on the disaster map (no personal details)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    reference_no: str
+    latitude: Decimal
+    longitude: Decimal
+    location_accuracy_m: int | None
+    hazard_type: HazardTypeOut
+    other_hazard_text: str | None
+    barangay: BarangayOut | None
+    landmark: str | None
+    incident_date: date
+    incident_time: time | None
+    status: ReportStatus
+    is_demo: bool
+
+
+class MapData(BaseModel):
+    points: list[MapPoint]
+    #: Matching reports that have no coordinates (landmark only).
+    without_location: int
+    #: True when more points matched than MAP_POINT_LIMIT and the rest were left out.
+    truncated: bool

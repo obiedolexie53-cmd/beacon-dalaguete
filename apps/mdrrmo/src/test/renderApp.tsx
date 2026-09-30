@@ -3,6 +3,8 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { AuthProvider } from '@beacon/auth';
 import {
   ApiClient,
+  type MapData,
+  type MapPoint,
   type SessionResponse,
   type StaffReportDetail,
   type StaffDashboard,
@@ -124,6 +126,42 @@ export function makeDetail(overrides: Partial<StaffReportDetail> = {}): StaffRep
   };
 }
 
+export function makePoint(overrides: Partial<MapPoint> = {}): MapPoint {
+  return {
+    reference_no: 'BEA-2026-000125',
+    latitude: '9.761200',
+    longitude: '123.534900',
+    location_accuracy_m: 12,
+    hazard_type: { id: 1, code: 'flood', name: 'Flood' },
+    other_hazard_text: null,
+    barangay: { id: 28, name: 'Poblacion' },
+    landmark: 'Public market',
+    incident_date: '2026-09-30',
+    incident_time: '14:05:00',
+    status: 'needs_clarification',
+    is_demo: false,
+    ...overrides,
+  };
+}
+
+export const MAP_DATA: MapData = {
+  points: [
+    makePoint(),
+    makePoint({
+      reference_no: 'BEA-2026-000123',
+      latitude: '9.841200',
+      longitude: '123.487300',
+      hazard_type: { id: 2, code: 'landslide', name: 'Landslide' },
+      barangay: { id: 23, name: 'Mantalongon' },
+      landmark: null,
+      status: 'under_verification',
+      is_demo: true,
+    }),
+  ],
+  without_location: 1,
+  truncated: false,
+};
+
 export const HAZARD_TYPES = [
   { id: 1, code: 'flood', name: 'Flood' },
   { id: 2, code: 'landslide', name: 'Landslide' },
@@ -145,6 +183,7 @@ export function signedInWith(overrides: Record<string, Override> = {}): Handler 
     if (path === '/staff/dashboard?include_demo=false')
       return json(200, makeDashboard(undefined, false));
     if (path === '/hazard-types') return json(200, HAZARD_TYPES);
+    if (path.startsWith('/staff/map/reports?')) return json(200, MAP_DATA);
     if (path === '/barangays') return json(200, BARANGAYS);
     if (path.startsWith('/staff/reports?')) {
       const items = [makeRow(), DEMO_ROW];

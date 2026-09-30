@@ -8,6 +8,7 @@ from app.media.router import resident_router as media_resident_router
 from app.notifications.router import router as notifications_router
 from app.reports.router import public_router as reports_public_router
 from app.reports.router import resident_router as reports_resident_router
+from app.staff.reports import map_router as staff_map_router
 from app.staff.reports import router as staff_reports_router
 from app.staff.router import router as staff_router
 
@@ -24,3 +25,4 @@ api_router.include_router(media_public_router)
 api_router.include_router(notifications_router)
 api_router.include_router(staff_router)
 api_router.include_router(staff_reports_router)
+api_router.include_router(staff_map_router)

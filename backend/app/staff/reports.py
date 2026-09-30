@@ -15,8 +15,10 @@ from app.media.service import active_media
 from app.models import Report, User
 from app.reports.status import change_status
 from app.reports.workflow import ALLOWED_TRANSITIONS, STATUS_LABELS, ReportStatus
-from app.staff.queries import ReportFilters, search_reports
+from app.staff.queries import ReportFilters, map_reports, search_reports
 from app.staff.schemas import (
+    MapData,
+    MapPoint,
     ReporterInfo,
     StaffReportDetail,
     StaffReportPage,
@@ -26,6 +28,10 @@ from app.staff.schemas import (
 )
 
 router = APIRouter(prefix="/staff/reports", tags=["staff"])
+map_router = APIRouter(prefix="/staff/map", tags=["staff"])
+
+#: More than enough for one municipality; keeps the map responsive.
+MAP_POINT_LIMIT = 5000
 
 REPORT_NOT_FOUND = ApiError(status.HTTP_404_NOT_FOUND, "not_found", "Report not found.")
 
@@ -165,3 +171,31 @@ def update_status(
         )
     change_status(db, report, body.status, staff, body.note, client_ip(request))
     return _detail(db, report)
+
+
+@map_router.get("/reports", response_model=MapData)
+def map_data(
+    _staff: CurrentStaff,
+    db: DbSession,
+    status_: Annotated[ReportStatus | None, Query(alias="status")] = None,
+    hazard: Annotated[str | None, Query(max_length=40)] = None,
+    barangay_id: Annotated[int | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    include_demo: Annotated[bool, Query()] = True,
+) -> MapData:
+    """Recorded reports with coordinates, for the disaster map."""
+    filters = ReportFilters(
+        status=status_,
+        hazard=hazard or None,
+        barangay_id=barangay_id,
+        date_from=date_from,
+        date_to=date_to,
+        include_demo=include_demo,
+    )
+    points, without_location, truncated = map_reports(db, filters, limit=MAP_POINT_LIMIT)
+    return MapData(
+        points=[MapPoint.model_validate(p) for p in points],
+        without_location=without_location,
+        truncated=truncated,
+    )
