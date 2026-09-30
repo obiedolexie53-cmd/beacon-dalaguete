@@ -18,6 +18,10 @@ export function ReportWizard() {
   }, [pathname]);
 
   if (!draft) return <Navigate to="/report" replace />;
+  // Already sent: only its evidence upload can continue, from the confirmation screen.
+  if (draft.submittedReferenceNo) {
+    return <Navigate to={`/report/submitted/${draft.submittedReferenceNo}`} replace />;
+  }
   // Later steps need a hazard first.
   if (current > 0 && !draft.hazardCode) return <Navigate to="/report/new/hazard" replace />;
 

@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime, time
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -12,6 +13,7 @@ from pydantic import (
 )
 
 from app.auth.schemas import BarangayOut
+from app.media.schemas import MediaOut
 from app.models import LocationSource
 from app.reports.validation import (
     DESCRIPTION_MAX,
@@ -143,3 +145,26 @@ class ReportCreate(BaseModel):
         if (self.latitude is None) != (self.longitude is None):
             raise ValueError("Provide both latitude and longitude, or neither")
         return self
+
+
+class TimelineEntry(BaseModel):
+    status: ReportStatus
+    changed_at: datetime
+    #: Visible to the reporter. Staff names are never shown, only "mdrrmo".
+    by: Literal["you", "mdrrmo"]
+    note: str | None
+
+
+class ReportDetail(ReportSummary):
+    description: str
+    municipality: str
+    province: str
+    landmark: str | None
+    latitude: Decimal | None
+    longitude: Decimal | None
+    location_accuracy_m: int | None
+    location_source: LocationSource | None
+    timeline: list[TimelineEntry]
+    media: list[MediaOut]
+    #: Whether the reporter can still add photos/videos.
+    evidence_open: bool

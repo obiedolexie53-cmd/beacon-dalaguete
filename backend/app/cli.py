@@ -26,7 +26,16 @@ from app.auth.validation import check_password_strength
 from app.core.config import get_settings
 from app.core.db import get_engine
 from app.core.security import hash_password
-from app.models import Barangay, HazardType, Report, ReportStatusHistory, User, UserRole
+from app.models import (
+    Barangay,
+    HazardType,
+    Notification,
+    Report,
+    ReportStatusHistory,
+    User,
+    UserRole,
+)
+from app.notifications.service import STATUS_MESSAGES
 from app.reports.reference import reserve_reference_number
 from app.reports.workflow import ReportStatus
 from seeds.demo_reports import DEMO_REPORTS
@@ -180,8 +189,20 @@ def _seed_demo_reports(db: Session) -> list[str]:
                 changed_at=demo.submitted_at,
             )
         )
+        db.add(
+            Notification(
+                user_id=reporter.id,
+                report_id=report.id,
+                kind="report_submitted",
+                title="Report received",
+                body=f"Report {reference_no} was submitted. MDRRMO personnel will review it.",
+                created_at=demo.submitted_at,
+                read_at=demo.submitted_at,
+            )
+        )
         previous = ReportStatus.SUBMITTED
         for step, (status, note) in enumerate(demo.history, start=1):
+            changed_at = demo.submitted_at + timedelta(hours=step)
             db.add(
                 ReportStatusHistory(
                     report_id=report.id,
@@ -189,7 +210,21 @@ def _seed_demo_reports(db: Session) -> list[str]:
                     to_status=status,
                     changed_by_id=officer.id,
                     note=note,
-                    changed_at=demo.submitted_at + timedelta(hours=step),
+                    changed_at=changed_at,
+                )
+            )
+            title, body = STATUS_MESSAGES[status]
+            is_latest = demo.sequence == 123 and step == len(demo.history)
+            db.add(
+                Notification(
+                    user_id=reporter.id,
+                    report_id=report.id,
+                    kind=f"status_{status.value}",
+                    title=title,
+                    body=body.format(ref=reference_no) + f' Note from MDRRMO: "{note}"',
+                    created_at=changed_at,
+                    # The newest demo notification is left unread so the badge shows.
+                    read_at=None if is_latest else changed_at,
                 )
             )
             previous = status

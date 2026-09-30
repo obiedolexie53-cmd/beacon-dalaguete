@@ -21,6 +21,26 @@ export function ReportStartScreen() {
     navigate(draft?.hazardCode ? '/report/new/details' : '/report/new/hazard');
   }
 
+  if (draft?.submittedReferenceNo) {
+    return (
+      <div className="bcn-stack">
+        <PageHeader title="Report a Disaster" />
+        <Alert
+          tone="warning"
+          title="Files still waiting to upload"
+          action={
+            <Button onClick={() => navigate(`/report/submitted/${draft.submittedReferenceNo}`)}>
+              Finish uploading
+            </Button>
+          }
+        >
+          Report {draft.submittedReferenceNo} was sent, but some photos or videos have not been
+          uploaded yet. Finish or skip them before starting a new report.
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="bcn-stack">
       <PageHeader

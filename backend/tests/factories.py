@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
-from app.models import Barangay, HazardType, Report, User, UserRole
+from app.models import Barangay, HazardType, Report, ReportStatusHistory, User, UserRole
 from app.reports.reference import allocate_reference_number
 from app.reports.workflow import ReportStatus
 
@@ -69,5 +69,16 @@ def make_report(
         submitted_at=submitted_at or datetime.now(UTC),
     )
     db.add(report)
+    db.flush()
+    # Real submissions always start their history with "submitted" by the reporter.
+    db.add(
+        ReportStatusHistory(
+            report_id=report.id,
+            from_status=None,
+            to_status=ReportStatus.SUBMITTED,
+            changed_by_id=reporter.id,
+            changed_at=report.submitted_at,
+        )
+    )
     db.commit()
     return report

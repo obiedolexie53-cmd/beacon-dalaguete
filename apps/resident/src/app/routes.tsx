@@ -12,9 +12,11 @@ import { ReportStartScreen } from '../features/report/ReportStartScreen';
 import { ReportWizard } from '../features/report/ReportWizard';
 import { DetailsStep } from '../features/report/steps/DetailsStep';
 import { EvidenceStep } from '../features/report/steps/EvidenceStep';
+import { ReviewStep } from '../features/report/steps/ReviewStep';
+import { SubmittedScreen } from '../features/report/SubmittedScreen';
+import { ReportDetailsScreen } from '../features/reports/ReportDetailsScreen';
 import { HazardStep } from '../features/report/steps/HazardStep';
 import { LocationStep } from '../features/report/steps/LocationStep';
-import { UpcomingStep } from '../features/report/steps/UpcomingStep';
 import { MyReportsScreen } from '../features/my-reports/MyReportsScreen';
 import { NotificationsScreen } from '../features/notifications/NotificationsScreen';
 import { ProfileScreen } from '../features/profile/ProfileScreen';
@@ -64,15 +66,12 @@ export const routes: RouteObject[] = [
           { path: 'details', element: <DetailsStep /> },
           { path: 'location', element: <LocationStep /> },
           { path: 'evidence', element: <EvidenceStep /> },
-          {
-            path: 'review',
-            element: (
-              <UpcomingStep title="Review report" phase="Phase 8" backTo="/report/new/evidence" />
-            ),
-          },
+          { path: 'review', element: <ReviewStep /> },
         ],
       },
+      { path: '/report/submitted/:referenceNo', element: <SubmittedScreen /> },
       { path: '/my-reports', element: <MyReportsScreen /> },
+      { path: '/my-reports/:referenceNo', element: <ReportDetailsScreen /> },
       { path: '/notifications', element: <NotificationsScreen /> },
       { path: '/profile', element: <ProfileScreen /> },
     ],

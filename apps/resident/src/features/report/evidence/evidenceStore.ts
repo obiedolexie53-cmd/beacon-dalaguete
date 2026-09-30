@@ -5,6 +5,9 @@ import type { EvidenceKind } from '@beacon/shared';
  * IndexedDB (localStorage cannot hold files). Like drafts, they are deleted on
  * submission, discard and logout. If IndexedDB is unavailable (e.g. some private
  * browsing modes), they are kept in memory for the current visit only.
+ *
+ * File contents are stored as an ArrayBuffer rather than a Blob: older iOS
+ * Safari versions cannot store Blobs in IndexedDB reliably.
  */
 export interface StoredEvidence {
   id: string;
@@ -14,6 +17,19 @@ export interface StoredEvidence {
   mimeType: string;
   size: number;
   addedAt: number;
+}
+
+/** What is actually written to IndexedDB. */
+type EvidenceRecord = Omit<StoredEvidence, 'blob'> & { data: ArrayBuffer };
+
+async function toRecord(item: StoredEvidence): Promise<EvidenceRecord> {
+  const { blob, ...rest } = item;
+  return { ...rest, data: await blob.arrayBuffer() };
+}
+
+function fromRecord(record: EvidenceRecord): StoredEvidence {
+  const { data, ...rest } = record;
+  return { ...rest, blob: new Blob([data], { type: record.mimeType }) };
 }
 
 const DB_NAME = 'beacon-evidence';
@@ -61,8 +77,8 @@ function run<T>(
 
 export async function listEvidence(draftId: string): Promise<StoredEvidence[]> {
   try {
-    const items = await run('readonly', (s) => s.index('draftId').getAll(draftId));
-    return (items as StoredEvidence[]).sort((a, b) => a.addedAt - b.addedAt);
+    const records = await run('readonly', (s) => s.index('draftId').getAll(draftId));
+    return (records as EvidenceRecord[]).map(fromRecord).sort((a, b) => a.addedAt - b.addedAt);
   } catch {
     return [...memory.values()]
       .filter((item) => item.draftId === draftId)
@@ -72,7 +88,8 @@ export async function listEvidence(draftId: string): Promise<StoredEvidence[]> {
 
 export async function putEvidence(item: StoredEvidence): Promise<void> {
   try {
-    await run('readwrite', (s) => s.put(item));
+    const record = await toRecord(item);
+    await run('readwrite', (s) => s.put(record));
   } catch {
     memory.set(item.id, item);
   }

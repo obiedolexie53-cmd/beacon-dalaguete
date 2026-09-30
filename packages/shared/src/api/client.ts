@@ -66,6 +66,11 @@ export class ApiClient {
     return this.request<T>('POST', path, body);
   }
 
+  /** Multipart upload (e.g. a photo). The browser sets the multipart boundary header. */
+  upload<T>(path: string, form: FormData): Promise<T> {
+    return this.request<T>('POST', path, form);
+  }
+
   async login(identifier: string, password: string): Promise<SessionResponse> {
     const session = await this.request<SessionResponse>(
       'POST',
@@ -136,8 +141,9 @@ export class ApiClient {
     body?: unknown,
     { auth = true, retried = false }: { auth?: boolean; retried?: boolean } = {},
   ): Promise<T> {
+    const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
     if (auth && this.accessToken) headers.Authorization = `Bearer ${this.accessToken}`;
 
     let response: Response;
@@ -145,7 +151,7 @@ export class ApiClient {
       response = await (this.options.fetch ?? fetch)(`${this.options.baseUrl}${path}`, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
         credentials: 'same-origin',
       });
     } catch {

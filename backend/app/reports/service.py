@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.audit.service import record
 from app.core.errors import ApiError
 from app.models import Barangay, HazardType, Report, ReportStatusHistory, User
+from app.notifications.service import notify_submitted
 from app.reports.reference import allocate_reference_number
 from app.reports.schemas import ReportCreate
 from app.reports.validation import local_now
@@ -99,6 +100,7 @@ def create_report(db: Session, reporter: User, data: ReportCreate, ip: str | Non
             changed_by_id=reporter.id,
         )
     )
+    notify_submitted(db, report)
     record(
         db,
         "report.submitted",

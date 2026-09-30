@@ -287,6 +287,29 @@ too_many_reports`), with a message pointing to the MDRRMO.
   video playback, and responses are `private`, `nosniff` and sandboxed.
 - For deployment, the reverse proxy should cap request bodies at about 60 MB.
 
+**Implementation notes (Phase 8):**
+
+- **Submission** runs in two stages that can each be retried safely. First the
+  report is created (the same `client_request_id` never creates a duplicate).
+  Then each photo/video is uploaded and removed from the device once accepted.
+  - A connection failure before the report is accepted shows "Report Not
+    Submitted", and the draft is kept.
+  - A failed upload leaves the report submitted and the file on the device,
+    with "Retry upload" on the confirmation screen (and on the Report tab).
+  - Files the server rejects (too large, wrong type) are reported and not retried.
+- The resident confirms that the information is true before submitting.
+- `GET /api/v1/me/reports/{reference_no}` returns the full report: status
+  timeline (MDRRMO notes shown, staff names never), location and signed
+  evidence links.
+- **Status changes** go through `app/reports/status.py::change_status`: staff
+  only, allowed transitions only, and a note is required for "Needs
+  Clarification". Each change writes history, sets verification/resolution
+  fields, notifies the reporter and is audited. The MDRRMO screens use it
+  from Phase 10.
+- **Notifications** (`/api/v1/me/notifications`) are in-app. The app polls the
+  unread count every minute and when it is reopened, and shows a badge on the
+  Notifications tab. Web push is an optional later addition (§8).
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

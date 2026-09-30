@@ -18,8 +18,12 @@ export interface MapPickerProps {
   /** Change this number to move the map view to the current pin (e.g. after GPS). */
   focusKey?: number;
   /** Called when the resident taps the map, drags the pin or places it at the centre. */
-  onPick: (point: MapPoint) => void;
+  onPick?: (point: MapPoint) => void;
+  /** Show the pin only (report details): no tapping, dragging or centre button. */
+  readOnly?: boolean;
 }
+
+const ignorePick = () => undefined;
 
 const PIN_ICON = L.divIcon({
   className: 'r-map-pin',
@@ -39,13 +43,20 @@ const PIN_ZOOM = 17;
 const DEFAULT_ZOOM = 13;
 
 /** OpenStreetMap map where the resident marks the incident location. */
-export function MapPicker({ position, accuracy, focusKey = 0, onPick }: MapPickerProps) {
+export function MapPicker({
+  position,
+  accuracy,
+  focusKey = 0,
+  onPick = ignorePick,
+  readOnly = false,
+}: MapPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
   const onPickRef = useRef(onPick);
   const initialPosition = useRef(position);
+  const readOnlyRef = useRef(readOnly);
 
   useEffect(() => {
     onPickRef.current = onPick;
@@ -64,7 +75,9 @@ export function MapPicker({ position, accuracy, focusKey = 0, onPick }: MapPicke
       attribution: OSM_TILES.attribution,
       maxZoom: OSM_TILES.maxZoom,
     }).addTo(map);
-    map.on('click', (event: L.LeafletMouseEvent) => onPickRef.current(toPoint(event.latlng)));
+    if (!readOnlyRef.current) {
+      map.on('click', (event: L.LeafletMouseEvent) => onPickRef.current(toPoint(event.latlng)));
+    }
     mapRef.current = map;
     return () => {
       map.remove();
@@ -92,7 +105,7 @@ export function MapPicker({ position, accuracy, focusKey = 0, onPick }: MapPicke
     } else {
       markerRef.current = L.marker([lat, lng], {
         icon: PIN_ICON,
-        draggable: true,
+        draggable: !readOnlyRef.current,
         title: 'Incident location',
         alt: 'Incident location pin',
       })
@@ -127,16 +140,22 @@ export function MapPicker({ position, accuracy, focusKey = 0, onPick }: MapPicke
         ref={containerRef}
         className="r-map__canvas"
         role="application"
-        aria-label="Map of Dalaguete. Tap to place the incident pin. Use arrow keys to move the map."
+        aria-label={
+          readOnly
+            ? 'Map showing the incident location'
+            : 'Map of Dalaguete. Tap to place the incident pin. Use arrow keys to move the map.'
+        }
       />
-      <button
-        type="button"
-        className="bcn-button bcn-button--secondary bcn-button--sm r-map__center-button"
-        onClick={() => mapRef.current && onPickRef.current(toPoint(mapRef.current.getCenter()))}
-      >
-        <Crosshair size={18} aria-hidden="true" />
-        Place pin at map centre
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          className="bcn-button bcn-button--secondary bcn-button--sm r-map__center-button"
+          onClick={() => mapRef.current && onPickRef.current(toPoint(mapRef.current.getCenter()))}
+        >
+          <Crosshair size={18} aria-hidden="true" />
+          Place pin at map centre
+        </button>
+      )}
     </div>
   );
 }

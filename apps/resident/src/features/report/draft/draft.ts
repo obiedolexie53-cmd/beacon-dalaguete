@@ -24,6 +24,8 @@ export interface ReportDraft {
   longitude: number | null;
   locationAccuracyM: number | null;
   locationSource: 'gps' | 'map_pin' | null;
+  /** Set once the report itself is accepted; the draft remains while evidence is still uploading. */
+  submittedReferenceNo: string | null;
   updatedAt: string;
 }
 
@@ -35,6 +37,7 @@ const LOCATION_DEFAULTS = {
   longitude: null,
   locationAccuracyM: null,
   locationSource: null,
+  submittedReferenceNo: null,
 } satisfies Partial<ReportDraft>;
 
 const KEY_PREFIX = 'beacon.reportDraft.';
@@ -67,7 +70,7 @@ export function loadDraft(userId: string): ReportDraft | null {
   try {
     const raw = localStorage.getItem(KEY_PREFIX + userId);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
-    // Drafts saved before the location step existed get empty location fields.
+    // Drafts saved by earlier versions of the app get empty values for newer fields.
     return isDraft(parsed) ? { ...LOCATION_DEFAULTS, ...parsed } : null;
   } catch {
     return null;

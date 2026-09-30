@@ -72,3 +72,66 @@ export interface ReportPage {
   items: ReportSummary[];
   total: number;
 }
+
+export interface MediaItem {
+  id: string;
+  kind: 'photo' | 'video';
+  mime_type: string;
+  size_bytes: number;
+  width: number | null;
+  height: number | null;
+  uploaded_at: string;
+  /** Short-lived signed link; fetch the report again for a fresh one. */
+  url: string;
+}
+
+export interface TimelineEntry {
+  status: ReportStatus;
+  changed_at: string;
+  by: 'you' | 'mdrrmo';
+  note: string | null;
+}
+
+export interface ReportDetail extends ReportSummary {
+  description: string;
+  municipality: string;
+  province: string;
+  landmark: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  location_accuracy_m: number | null;
+  location_source: 'gps' | 'map_pin' | 'manual' | null;
+  timeline: TimelineEntry[];
+  media: MediaItem[];
+  evidence_open: boolean;
+}
+
+export interface NotificationItem {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  report_reference_no: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+export interface NotificationList {
+  items: NotificationItem[];
+  unread: number;
+}
+
+export interface ReportCreateRequest {
+  client_request_id: string;
+  hazard_type_id: number;
+  other_hazard_text: string | null;
+  description: string;
+  incident_date: string;
+  incident_time: string | null;
+  barangay_id: number;
+  landmark: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  location_accuracy_m: number | null;
+  location_source: 'gps' | 'map_pin' | null;
+}

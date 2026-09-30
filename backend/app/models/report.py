@@ -112,7 +112,8 @@ class Report(Base):
     hazard_type: Mapped[HazardType] = relationship(lazy="joined")
     barangay: Mapped[Barangay | None] = relationship(lazy="joined")
     history: Mapped[list["ReportStatusHistory"]] = relationship(
-        back_populates="report", order_by="ReportStatusHistory.changed_at"
+        back_populates="report",
+        order_by="(ReportStatusHistory.changed_at, ReportStatusHistory.id)",
     )
 
 

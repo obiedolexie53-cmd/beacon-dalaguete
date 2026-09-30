@@ -3,6 +3,7 @@
 from app.models.audit import AuditLog
 from app.models.location import Barangay
 from app.models.media import MediaKind, ReportMedia
+from app.models.notification import Notification
 from app.models.report import (
     HazardType,
     LocationSource,
@@ -18,6 +19,7 @@ __all__ = [
     "HazardType",
     "LocationSource",
     "MediaKind",
+    "Notification",
     "RefreshToken",
     "Report",
     "ReportMedia",

@@ -16,7 +16,8 @@
     background-color 0.15s,
     border-color 0.15s;
 }
-.bcn-button svg {
+.bcn-button svg,
+.bcn-badge svg {
   /* Icons keep their size; the base rule max-width: 100% would let flex squeeze them. */
   flex: none;
 }

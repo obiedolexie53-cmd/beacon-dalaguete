@@ -3,6 +3,8 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { AuthProvider } from '@beacon/auth';
 import {
   ApiClient,
+  type NotificationList,
+  type ReportDetail,
   type ReportSummary,
   type ResidentDashboard,
   type SessionResponse,
@@ -94,20 +96,77 @@ export function makeDashboard(
   return { counts: { ...base, ...counts }, recent_reports: reports.slice(0, 3) };
 }
 
+export function makeDetail(overrides: Partial<ReportDetail> = {}): ReportDetail {
+  return {
+    ...DEMO_REPORT,
+    description: 'DEMO DATA: Soil and rocks slid onto the barangay road.',
+    municipality: 'Dalaguete',
+    province: 'Cebu',
+    landmark: 'Near the barangay hall road junction',
+    latitude: '9.841200',
+    longitude: '123.487300',
+    location_accuracy_m: 12,
+    location_source: 'gps',
+    timeline: [
+      { status: 'submitted', changed_at: '2026-09-28T08:52:00Z', by: 'you', note: null },
+      {
+        status: 'under_verification',
+        changed_at: '2026-09-28T09:52:00Z',
+        by: 'mdrrmo',
+        note: 'DEMO: Forwarded to field team for validation.',
+      },
+    ],
+    media: [],
+    evidence_open: true,
+    ...overrides,
+  };
+}
+
+export const NOTIFICATIONS: NotificationList = {
+  unread: 1,
+  items: [
+    {
+      id: 'n2',
+      kind: 'status_under_verification',
+      title: 'Your report is being verified',
+      body: 'MDRRMO personnel are now reviewing report BEA-2026-000123.',
+      report_reference_no: 'BEA-2026-000123',
+      read: false,
+      created_at: '2026-09-28T09:52:00Z',
+    },
+    {
+      id: 'n1',
+      kind: 'report_submitted',
+      title: 'Report received',
+      body: 'Report BEA-2026-000123 was submitted.',
+      report_reference_no: 'BEA-2026-000123',
+      read: true,
+      created_at: '2026-09-28T08:52:00Z',
+    },
+  ],
+};
+
+type Override = (init: RequestInit) => Response | Promise<Response>;
+
 /** A signed-in resident, with optional overrides for specific API paths. */
-export function signedInWith(overrides: Record<string, () => Response> = {}): Handler {
-  return (path) => {
+export function signedInWith(overrides: Record<string, Override> = {}): Handler {
+  return (path, init) => {
     const override = overrides[path];
-    if (override) return override();
+    if (override) return override(init);
     if (path === '/auth/refresh') return json(200, session());
     if (path === '/auth/logout') return new Response(null, { status: 204 });
     if (path === '/me/dashboard') return json(200, makeDashboard());
     if (path === '/hazard-types') return json(200, HAZARD_TYPES);
     if (path === '/barangays') return json(200, BARANGAYS);
-    if (path.startsWith('/me/reports')) {
+    if (path === '/me/notifications') return json(200, NOTIFICATIONS);
+    if (path === '/me/notifications/unread-count')
+      return json(200, { unread: NOTIFICATIONS.unread });
+    if (path.startsWith('/me/notifications/')) return new Response(null, { status: 204 });
+    if (path.startsWith('/me/reports?')) {
       const items = [makeReport(), DEMO_REPORT];
       return json(200, { items, total: items.length });
     }
+    if (path === '/me/reports/BEA-2026-000123') return json(200, makeDetail());
     return json(404, {});
   };
 }
@@ -123,7 +182,13 @@ export function renderApp(path: string, handler: Handler) {
     authPath: '/auth',
     fetch: (async (url: string, init: RequestInit) => {
       const apiPath = url.replace('/api/v1', '');
-      calls.push({ path: apiPath, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      const body =
+        init.body instanceof FormData
+          ? init.body
+          : init.body
+            ? JSON.parse(String(init.body))
+            : undefined;
+      calls.push({ path: apiPath, body });
       return handler(apiPath, init);
     }) as unknown as typeof fetch,
   });

@@ -89,6 +89,16 @@ describe('ApiClient', () => {
     expect(error).toMatchObject({ code: 'network_error', message: NETWORK_ERROR_MESSAGE });
   });
 
+  it('sends uploads as multipart form data', async () => {
+    const { client, fetchMock } = makeClient(() => json(201, { id: 'm1' }));
+    const form = new FormData();
+    form.append('file', new Blob(['x'], { type: 'image/jpeg' }), 'photo.jpg');
+    await client.upload('/me/reports/BEA-2026-000124/media', form);
+    const init = fetchMock.mock.calls[0]![1];
+    expect(init.body).toBe(form);
+    expect((init.headers as Record<string, string>)['Content-Type']).toBeUndefined();
+  });
+
   it('exposes field errors from the API', async () => {
     const { client } = makeClient(() =>
       json(422, {
