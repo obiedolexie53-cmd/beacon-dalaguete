@@ -1,16 +1,4 @@
-/** Base path for the BEACON API. Proxied to the backend in development. */
-export const API_BASE = '/api/v1';
+import { ApiClient } from '@beacon/shared';
 
-export interface HealthResponse {
-  status: 'ok';
-  service: string;
-  version: string;
-}
-
-export async function fetchHealth(signal?: AbortSignal): Promise<HealthResponse> {
-  const response = await fetch(`${API_BASE}/health`, { signal });
-  if (!response.ok) {
-    throw new Error(`API responded with ${response.status}`);
-  }
-  return (await response.json()) as HealthResponse;
-}
+/** The console's API client. Staff auth routes live under /api/v1/staff/auth. */
+export const api = new ApiClient({ baseUrl: '/api/v1', authPath: '/staff/auth' });

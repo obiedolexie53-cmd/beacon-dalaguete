@@ -15,7 +15,8 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phases 1–2 complete: project structure, design system and navigation.
+Phases 1–3 complete: project structure, design system and navigation, and
+resident/staff authentication.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
 the design system.
@@ -28,6 +29,7 @@ the design system.
 | `apps/mdrrmo`        | MDRRMO console (React + TypeScript + Vite), staff only       |
 | `packages/shared`    | Shared domain constants: hazards, status workflow, ref. nos. |
 | `packages/ui`        | Design system: tokens, styles, React components              |
+| `packages/auth`      | Shared React sign-in state (AuthProvider, useAuth)           |
 | `backend`            | FastAPI API, Alembic migrations, seed data, tests            |
 | `docker-compose.yml` | PostgreSQL + PostGIS (and optionally the API) for local dev  |
 
@@ -53,6 +55,28 @@ pnpm dev:mdrrmo     # http://localhost:5174
 ```
 
 The Vite dev servers proxy `/api` to the API on port 8000.
+
+### Accounts
+
+Residents register in the resident app. **MDRRMO accounts cannot be registered
+publicly.** An administrator creates them with the CLI (the password is typed at
+a hidden prompt):
+
+```bash
+cd backend
+uv run python -m app.cli create-staff --email officer@example.gov.ph --name "Juan Dela Cruz"
+uv run python -m app.cli create-staff --email admin@example.gov.ph --name "..." --role admin
+uv run python -m app.cli set-staff-active --email officer@example.gov.ph --inactive
+```
+
+For local development and walkthroughs, `uv run python -m app.cli seed-demo`
+creates two fictional **DEMO** accounts (refused in production). Both use the
+password `BeaconDemo-2026`:
+
+| Account                            | App            |
+| ---------------------------------- | -------------- |
+| `leona.legaspi@demo.beacon.local`  | Resident app   |
+| `mdrrmo.officer@demo.beacon.local` | MDRRMO console |
 
 ### Checks
 

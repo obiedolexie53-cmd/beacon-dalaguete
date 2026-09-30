@@ -12,6 +12,7 @@
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@beacon/auth": "workspace:*",
     "@beacon/shared": "workspace:*",
     "@beacon/ui": "workspace:*",
     "lucide-react": "^1.49.0",

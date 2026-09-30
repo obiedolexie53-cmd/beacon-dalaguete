@@ -89,3 +89,15 @@ describe('OfflineBanner', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
+
+describe('PasswordField', () => {
+  it('toggles password visibility', async () => {
+    const { PasswordField } = await import('./Field');
+    render(<PasswordField label="Password" />);
+    const input = screen.getByLabelText('Password');
+    expect(input.getAttribute('type')).toBe('password');
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(input.getAttribute('type')).toBe('text');
+    expect(screen.getByRole('button', { name: 'Hide password' })).toBeTruthy();
+  });
+});

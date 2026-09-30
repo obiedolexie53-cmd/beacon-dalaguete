@@ -201,3 +201,27 @@
   width: 100%;
   max-width: 420px;
 }
+
+.m-topbar__role {
+  display: block;
+  color: var(--bcn-text-muted);
+  font-size: var(--bcn-text-xs);
+  font-weight: 500;
+}
+.m-signout {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-2);
+  min-height: var(--bcn-touch-target);
+  margin-top: var(--bcn-space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: #dbe5f3;
+  font-weight: 600;
+  cursor: pointer;
+}
+.m-signout:hover {
+  color: var(--bcn-text-inverse);
+  text-decoration: underline;
+}

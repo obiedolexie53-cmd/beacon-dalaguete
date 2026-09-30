@@ -1,15 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RouterProvider, createMemoryRouter } from 'react-router';
-import { routes } from './routes';
 import { SPLASH_DURATION_MS } from '../features/onboarding/SplashScreen';
-
-function renderAt(path: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(<RouterProvider router={router} />);
-  return router;
-}
+import { anonymous, renderApp, signedIn } from '../test/renderApp';
 
 afterEach(() => {
   cleanup();
@@ -17,28 +10,42 @@ afterEach(() => {
 });
 
 describe('resident flow', () => {
-  it('goes from splash to welcome', () => {
-    vi.useFakeTimers();
-    const router = renderAt('/');
+  it('goes from splash to welcome when signed out', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { router } = renderApp('/', anonymous);
     expect(screen.getByRole('heading', { name: 'BEACON' })).toBeTruthy();
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(SPLASH_DURATION_MS);
     });
-    expect(router.state.location.pathname).toBe('/welcome');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/welcome'));
+  });
+
+  it('goes from splash straight to home when a session is restored', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { router } = renderApp('/', signedIn);
+    await act(async () => {
+      vi.advanceTimersByTime(SPLASH_DURATION_MS);
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'));
   });
 
   it('offers registration and login from the welcome screen', async () => {
-    const router = renderAt('/welcome');
-    expect(screen.getByRole('link', { name: 'Create an account' })).toBeTruthy();
+    const { router } = renderApp('/welcome', anonymous);
+    expect(await screen.findByRole('link', { name: 'Create an account' })).toBeTruthy();
     await userEvent.click(screen.getByRole('link', { name: 'Log in' }));
     expect(router.state.location.pathname).toBe('/login');
+  });
+
+  it('sends signed-out visitors to login', async () => {
+    const { router } = renderApp('/my-reports', anonymous);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
   });
 });
 
 describe('bottom navigation', () => {
-  it('has the five resident sections in order', () => {
-    renderAt('/home');
-    const nav = screen.getByRole('navigation', { name: 'Main' });
+  it('has the five resident sections in order', async () => {
+    renderApp('/home', signedIn);
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
     const labels = within(nav)
       .getAllByRole('link')
       .map((link) => link.textContent);
@@ -46,12 +53,11 @@ describe('bottom navigation', () => {
   });
 
   it('marks the current section and navigates between sections', async () => {
-    const router = renderAt('/home');
-    const nav = screen.getByRole('navigation', { name: 'Main' });
+    const { router } = renderApp('/home', signedIn);
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe(
       'page',
     );
-
     await userEvent.click(within(nav).getByRole('link', { name: 'My Reports' }));
     expect(router.state.location.pathname).toBe('/my-reports');
     expect(screen.getByRole('heading', { name: 'No reports yet' })).toBeTruthy();
@@ -59,20 +65,23 @@ describe('bottom navigation', () => {
 });
 
 describe('screens', () => {
-  it('labels the sample report on Home as demo data', () => {
-    renderAt('/home');
+  it('greets the resident and labels the sample report as demo data', async () => {
+    renderApp('/home', signedIn);
+    expect(await screen.findByRole('heading', { name: /Leona/ })).toBeTruthy();
     const card = screen.getByRole('article', { name: 'Report BEA-2026-000123' });
     expect(within(card).getByText('DEMO DATA')).toBeTruthy();
     expect(within(card).getByText('Under Verification')).toBeTruthy();
   });
 
-  it('shows the evidence safety reminder on the report screen', () => {
-    renderAt('/report');
-    expect(screen.getByText('Do not put yourself in danger to obtain evidence.')).toBeTruthy();
+  it('shows the evidence safety reminder on the report screen', async () => {
+    renderApp('/report', signedIn);
+    expect(
+      await screen.findByText('Do not put yourself in danger to obtain evidence.'),
+    ).toBeTruthy();
   });
 
   it('shows a not-found screen for unknown paths', () => {
-    renderAt('/does-not-exist');
+    renderApp('/does-not-exist', anonymous);
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeTruthy();
   });
 });

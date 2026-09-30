@@ -25,7 +25,7 @@ services:
       BEACON_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-beacon}:${POSTGRES_PASSWORD:-beacon_dev_password}@db:5432/${POSTGRES_DB:-beacon}
       BEACON_CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174"]'
       BEACON_MEDIA_ROOT: /data/media
-      BEACON_SECRET_KEY: ${BEACON_SECRET_KEY:-change-me-in-development-only}
+      BEACON_SECRET_KEY: ${BEACON_SECRET_KEY:-change-me-dev-only-never-use-in-production}
     ports:
       - '8000:8000'
     volumes:

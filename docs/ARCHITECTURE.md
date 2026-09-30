@@ -232,22 +232,49 @@ a `report_status_history` row and a notification to the reporter.
 
 ## 5. Authentication approach
 
-- **Residents** self-register with name, email or mobile number, password, and
-  barangay, plus Data Privacy Act (RA 10173) consent.
+_Implemented in Phase 3 (`backend/app/auth`, `packages/auth`)._
+
+- **Residents** self-register with full name, **email and/or Philippine mobile
+  number** (stored as `+639XXXXXXXXX`), barangay and password. They must accept
+  the Data Privacy Act (RA 10173) notice; the consent time and notice version
+  are stored. They can log in with either the email or the mobile number.
+  Public registration can only ever create `resident` accounts.
 - **MDRRMO personnel** have **no public registration.** Accounts are created
-  by an admin via a CLI script or an admin-only endpoint. The resident app has
-  no staff login route at all.
-- Passwords are hashed with **Argon2id**. Login is rate-limited, and
-  repeated failures lock the account temporarily.
-- A short-lived **JWT access token** (~15 min) is kept in memory. A
-  **rotating refresh token** lives in an httpOnly, Secure, SameSite cookie and
-  is stored hashed in the database so it can be revoked.
+  and disabled only through the admin CLI (`python -m app.cli create-staff` /
+  `set-staff-active`). Staff passwords must be at least 12 characters. The
+  resident app has no staff login at all.
+- Passwords are hashed with **Argon2id**. Common and too-short passwords, and
+  passwords containing the user's email or number, are rejected. After
+  **5 failed attempts** an account is locked for 15 minutes. The login check
+  takes the same time whether or not an account exists, and the error message
+  is the same.
+- **Two separate sessions:** tokens are bound to one app (`aud` = `resident` or
+  `staff`). A resident token is rejected by staff routes and vice versa, and
+  staff credentials do not work in the resident app.
+- A short-lived **JWT access token** (15 min) is kept in memory only; nothing
+  is written to `localStorage`. A **rotating refresh token** lives in an
+  httpOnly, SameSite=Strict cookie scoped to the auth path (`beacon_rt` on
+  `/api/v1/auth`, `beacon_staff_rt` on `/api/v1/staff/auth`). The cookie is
+  `Secure` in production. Refresh tokens are stored as SHA-256 hashes and last
+  14 days for residents and 12 hours for staff.
+- **Stolen-token detection:** every refresh rotates the token. If an
+  already-rotated token is presented again, the whole login's token family is
+  revoked. A 10-second grace window, plus a cross-tab Web Lock in the client,
+  stops two open tabs refreshing at once from being mistaken for theft.
 - **Role-based access control** is enforced as FastAPI dependencies on every
-  route:
-  - `resident`: `/me/*`. Report queries are always filtered by
-    `reporter_id = current_user`. Another user's report returns 404, not 403,
-    so report IDs aren't leaked.
+  route. The user is re-loaded on each request, so disabling an account
+  revokes access immediately.
+  - `resident`: `/me` and (from Phase 5) the resident's own reports. Report
+    queries are always filtered by `reporter_id = current_user`. Another
+    user's report returns 404, not 403, so report IDs aren't leaked.
   - `mdrrmo` / `admin`: `/staff/*` monitoring, verification, map and analysis.
+- **Audit log:** registrations, logins, failed logins, lockouts, logouts,
+  token-reuse detection and staff account changes are recorded with time and
+  IP address.
+- **Not yet implemented:** self-service password reset (needs an SMTP or SMS
+  provider, see §8; residents are told to contact the MDRRMO for now) and
+  per-IP rate limiting (to be configured at the reverse proxy for deployment,
+  Phase 15).
 - **Media** is never publicly addressable. Files are streamed only after an
   ownership or role check (or through short-lived signed URLs once in object
   storage). EXIF metadata is stripped from stored photos.

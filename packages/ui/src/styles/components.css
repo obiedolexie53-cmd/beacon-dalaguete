@@ -200,9 +200,9 @@
 .bcn-field__label {
   font-weight: 600;
 }
-.bcn-field__required {
+.bcn-field__label--required::after {
+  content: ' *';
   color: var(--bcn-danger-600);
-  margin-left: 2px;
 }
 .bcn-field__hint {
   font-size: var(--bcn-text-sm);
@@ -326,4 +326,50 @@ textarea.bcn-input {
 .bcn-badge--resolved {
   background: var(--bcn-navy-900);
   color: var(--bcn-text-inverse);
+}
+
+/* ---------- Password & checkbox ---------- */
+.bcn-password {
+  position: relative;
+}
+.bcn-password .bcn-input {
+  padding-right: calc(var(--bcn-touch-target) + var(--bcn-space-1));
+}
+.bcn-password__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: var(--bcn-touch-target);
+  height: var(--bcn-touch-target);
+  border: none;
+  border-radius: var(--bcn-radius-md);
+  background: transparent;
+  color: var(--bcn-text-muted);
+  cursor: pointer;
+}
+.bcn-checkbox {
+  display: flex;
+  gap: var(--bcn-space-3);
+  align-items: flex-start;
+  min-height: var(--bcn-touch-target);
+  cursor: pointer;
+}
+.bcn-checkbox input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--bcn-navy-900);
+}
+
+/* ---------- Full-screen loading ---------- */
+.bcn-loading-screen {
+  display: grid;
+  place-items: center;
+  gap: var(--bcn-space-3);
+  min-height: 100dvh;
+  align-content: center;
+  color: var(--bcn-navy-900);
 }

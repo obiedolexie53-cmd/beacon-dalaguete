@@ -4,8 +4,6 @@
  */
 import type { ReportStatus } from '@beacon/shared';
 
-export const DEMO_STAFF = { fullName: 'MDRRMO Officer', role: 'MDRRMO Personnel' } as const;
-
 export interface DemoReportRow {
   referenceNo: string;
   hazardCode: string;

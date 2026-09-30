@@ -1,10 +1,14 @@
 import { Link } from 'react-router';
 import { Info, Megaphone } from 'lucide-react';
+import { useAuth } from '@beacon/auth';
 import { Alert, DemoBadge } from '@beacon/ui';
-import { DEMO_REPORT, DEMO_RESIDENT } from '../../demo/demoData';
+import { DEMO_REPORT } from '../../demo/demoData';
 import { ReportSummaryCard } from './ReportSummaryCard';
 
 export function HomeScreen() {
+  const { user } = useAuth();
+  const firstName = user?.full_name.split(' ')[0] ?? '';
+
   return (
     <div className="bcn-stack">
       <div>
@@ -12,7 +16,7 @@ export function HomeScreen() {
           Good day,
         </p>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {DEMO_RESIDENT.firstName} <DemoBadge />
+          {firstName} {user?.is_demo && <DemoBadge />}
         </h1>
       </div>
 
@@ -43,7 +47,7 @@ export function HomeScreen() {
 
       <p className="bcn-muted" style={{ fontSize: 'var(--bcn-text-sm)', display: 'flex', gap: 6 }}>
         <Info size={16} aria-hidden="true" style={{ marginTop: 3 }} />
-        Sample content shown for design review. Your own reports will appear here.
+        The sample report above is DEMO DATA for design review. Your own reports will appear here.
       </p>
     </div>
   );

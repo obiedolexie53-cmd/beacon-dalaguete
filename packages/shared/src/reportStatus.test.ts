@@ -43,3 +43,11 @@ describe('reference numbers', () => {
     expect(isReferenceNumber('BEA-26-123')).toBe(false);
   });
 });
+
+describe('formatPhMobile', () => {
+  it('groups digits for display', async () => {
+    const { formatPhMobile } = await import('./phone');
+    expect(formatPhMobile('+639171234567')).toBe('+63 917 123 4567');
+    expect(formatPhMobile('unexpected')).toBe('unexpected');
+  });
+});
