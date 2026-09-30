@@ -266,6 +266,10 @@ textarea.bcn-input {
 .bcn-page-header__title {
   margin: 0;
 }
+.bcn-page-header__title:focus {
+  outline: none;
+  box-shadow: none;
+}
 .bcn-page-header__subtitle {
   margin: var(--bcn-space-1) 0 0;
   color: var(--bcn-text-muted);

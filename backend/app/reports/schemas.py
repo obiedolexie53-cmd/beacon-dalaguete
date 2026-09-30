@@ -1,9 +1,26 @@
 import uuid
 from datetime import date, datetime, time
+from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from app.auth.schemas import BarangayOut
+from app.models import LocationSource
+from app.reports.validation import (
+    DESCRIPTION_MAX,
+    DESCRIPTION_MIN,
+    LANDMARK_MAX,
+    OTHER_HAZARD_MAX,
+    check_incident_date,
+    check_incident_time,
+)
 from app.reports.workflow import ReportStatus
 
 
@@ -49,3 +66,57 @@ class ResidentDashboard(BaseModel):
 class ReportPage(BaseModel):
     items: list[ReportSummary]
     total: int
+
+
+class ReportCreate(BaseModel):
+    """A resident's new report. Status, reporter and reference number are set by the server."""
+
+    client_request_id: uuid.UUID
+    hazard_type_id: int
+    other_hazard_text: str | None = Field(default=None, max_length=OTHER_HAZARD_MAX)
+    description: str
+    incident_date: date
+    incident_time: time | None = None
+    barangay_id: int
+    landmark: str | None = Field(default=None, max_length=LANDMARK_MAX)
+    latitude: Decimal | None = Field(default=None, ge=-90, le=90, decimal_places=6)
+    longitude: Decimal | None = Field(default=None, ge=-180, le=180, decimal_places=6)
+    location_accuracy_m: int | None = Field(default=None, ge=0, le=100_000)
+    location_source: LocationSource | None = None
+
+    @field_validator("description")
+    @classmethod
+    def _description(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < DESCRIPTION_MIN:
+            raise ValueError(f"Describe what happened in at least {DESCRIPTION_MIN} characters")
+        if len(value) > DESCRIPTION_MAX:
+            raise ValueError(f"Keep the description under {DESCRIPTION_MAX} characters")
+        return value
+
+    @field_validator("other_hazard_text", "landmark")
+    @classmethod
+    def _blank_is_none(cls, value: str | None) -> str | None:
+        return " ".join(value.split()) or None if value else None
+
+    @field_validator("incident_date")
+    @classmethod
+    def _incident_date(cls, value: date) -> date:
+        check_incident_date(value)
+        return value
+
+    @field_validator("incident_time")
+    @classmethod
+    def _incident_time(cls, value: time | None, info: ValidationInfo) -> time | None:
+        if value is None:
+            return None
+        value = value.replace(second=0, microsecond=0)
+        if (incident_date := info.data.get("incident_date")) is not None:
+            check_incident_time(incident_date, value)
+        return value
+
+    @model_validator(mode="after")
+    def _coordinates_pair(self) -> "ReportCreate":
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("Provide both latitude and longitude, or neither")
+        return self

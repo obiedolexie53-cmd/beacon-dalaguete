@@ -17,7 +17,10 @@ export function PageHeader({ title, subtitle, onBack, actions }: PageHeaderProps
         </button>
       )}
       <div className="bcn-page-header__text">
-        <h1 className="bcn-page-header__title">{title}</h1>
+        {/* tabIndex -1 lets screens move focus here after navigation. */}
+        <h1 className="bcn-page-header__title" tabIndex={-1}>
+          {title}
+        </h1>
         {subtitle && <p className="bcn-page-header__subtitle">{subtitle}</p>}
       </div>
       {actions}

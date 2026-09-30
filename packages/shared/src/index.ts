@@ -5,3 +5,5 @@ export * from './reportStatus';
 export * from './api';
 export * from './phone';
 export * from './format';
+export * from './reportRules';
+export * from './uuid';

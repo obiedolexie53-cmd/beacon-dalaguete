@@ -21,6 +21,10 @@ export function PrivacyNotice() {
           The disaster reports you submit, including the incident location (GPS), photos and videos
         </li>
         <li>Basic security records such as sign-in times</li>
+        <li>
+          Unsent report drafts, which are kept only on your own device until you submit or discard
+          them, and are deleted when you log out
+        </li>
       </ul>
       <h3>Why we collect it</h3>
       <ul>

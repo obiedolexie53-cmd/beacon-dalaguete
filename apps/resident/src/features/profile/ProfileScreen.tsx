@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { useAuth } from '@beacon/auth';
 import { Button, Card, DemoBadge, PageHeader } from '@beacon/ui';
 import { MUNICIPALITY, PROVINCE, formatPhMobile } from '@beacon/shared';
+import { clearAllDrafts } from '../report/draft/draft';
 
 export function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -21,8 +22,10 @@ export function ProfileScreen() {
 
   // After logout the route guard returns the resident to the Welcome screen.
   // If the network is down the device session is still cleared locally.
+  // Unsent drafts are deleted so the next person using this phone cannot read them.
   async function handleLogout() {
     setLoggingOut(true);
+    clearAllDrafts();
     await logout().catch(() => undefined);
   }
 

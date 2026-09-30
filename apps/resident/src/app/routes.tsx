@@ -9,6 +9,10 @@ import { RegisterScreen } from '../features/auth/RegisterScreen';
 import { PrivacyScreen } from '../features/auth/PrivacyScreen';
 import { HomeScreen } from '../features/home/HomeScreen';
 import { ReportStartScreen } from '../features/report/ReportStartScreen';
+import { ReportWizard } from '../features/report/ReportWizard';
+import { DetailsStep } from '../features/report/steps/DetailsStep';
+import { HazardStep } from '../features/report/steps/HazardStep';
+import { UpcomingStep } from '../features/report/steps/UpcomingStep';
 import { MyReportsScreen } from '../features/my-reports/MyReportsScreen';
 import { NotificationsScreen } from '../features/notifications/NotificationsScreen';
 import { ProfileScreen } from '../features/profile/ProfileScreen';
@@ -50,6 +54,24 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/home', element: <HomeScreen /> },
       { path: '/report', element: <ReportStartScreen /> },
+      {
+        path: '/report/new',
+        element: <ReportWizard />,
+        children: [
+          { path: 'hazard', element: <HazardStep /> },
+          { path: 'details', element: <DetailsStep /> },
+          {
+            path: 'location',
+            element: (
+              <UpcomingStep
+                title="Incident location"
+                phase="Phase 6"
+                backTo="/report/new/details"
+              />
+            ),
+          },
+        ],
+      },
       { path: '/my-reports', element: <MyReportsScreen /> },
       { path: '/notifications', element: <NotificationsScreen /> },
       { path: '/profile', element: <ProfileScreen /> },

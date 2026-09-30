@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from 'react-router';
 import { Bell, ClipboardList, House, Plus, UserRound, type LucideIcon } from 'lucide-react';
+import { useAuth } from '@beacon/auth';
 import { Logo, OfflineBanner } from '@beacon/ui';
 import { MUNICIPALITY, PROVINCE } from '@beacon/shared';
+import { ReportDraftProvider } from '../features/report/draft/ReportDraftProvider';
 
 interface NavItem {
   to: string;
@@ -20,6 +22,7 @@ export const RESIDENT_NAV: readonly NavItem[] = [
 
 /** Signed-in resident layout: top bar, page content and bottom navigation. */
 export function AppShell() {
+  const { user } = useAuth();
   return (
     <div className="r-shell">
       <header className="r-topbar">
@@ -30,7 +33,12 @@ export function AppShell() {
       </header>
       <OfflineBanner />
       <main className="r-screen">
-        <Outlet />
+        {user && (
+          // Keyed by user so a different resident on the same device never sees another's draft.
+          <ReportDraftProvider key={user.id} userId={user.id}>
+            <Outlet />
+          </ReportDraftProvider>
+        )}
       </main>
       <nav className="r-bottom-nav" aria-label="Main">
         <ul>

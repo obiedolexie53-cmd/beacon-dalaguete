@@ -39,6 +39,13 @@ export const anonymous: Handler = (path) =>
     ? json(401, { error: { code: 'session_expired', message: 'ended' } })
     : json(404, {});
 
+export const HAZARD_TYPES = [
+  { id: 1, code: 'flood', name: 'Flood' },
+  { id: 2, code: 'landslide', name: 'Landslide' },
+  { id: 3, code: 'earthquake', name: 'Earthquake' },
+  { id: 9, code: 'other', name: 'Other Hazard' },
+];
+
 export function makeReport(overrides: Partial<ReportSummary> = {}): ReportSummary {
   return {
     id: 'r1',
@@ -89,6 +96,7 @@ export function signedInWith(overrides: Record<string, () => Response> = {}): Ha
     if (path === '/auth/refresh') return json(200, session());
     if (path === '/auth/logout') return new Response(null, { status: 204 });
     if (path === '/me/dashboard') return json(200, makeDashboard());
+    if (path === '/hazard-types') return json(200, HAZARD_TYPES);
     if (path.startsWith('/me/reports')) {
       const items = [makeReport(), DEMO_REPORT];
       return json(200, { items, total: items.length });

@@ -227,6 +227,22 @@ analysis_runs                      -- cached ML results for reproducibility
 - Coordinates are stored as `latitude` / `longitude` numerics for now. A PostGIS
   `geography` column and spatial index are added with the disaster map (Phase 11).
 
+**Implementation notes (Phase 5):**
+
+- `POST /api/v1/me/reports` creates a report. The server always sets the
+  status (`submitted`), the reporter and the reference number, and ignores any
+  such fields sent by the app. Other Hazard requires a short description. The
+  incident must not be in the future (5-minute clock allowance) or more than a
+  year old.
+- **Idempotent submission:** each draft carries a `client_request_id`. If a
+  submission is retried (e.g. the reply was lost to a dropped connection), the
+  original report is returned with `200` instead of creating a duplicate.
+- **Spam limit:** at most 10 reports per resident per hour (`429
+too_many_reports`), with a message pointing to the MDRRMO.
+- **Drafts** are saved only on the resident's device (`localStorage`, keyed by
+  user). They are deleted on submission, on discard, and on logout for shared
+  phones, and they are disclosed in the privacy notice.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

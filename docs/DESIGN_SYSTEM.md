@@ -40,7 +40,8 @@ Each status has a colour **and** an icon, so it is never conveyed by colour alon
 - Touch targets are at least **48 × 48 px** (`--bcn-touch-target`).
 - Body and input text is at least **16 px**, which also prevents iOS zoom on focus.
 - Form fields link label, hint and error via `aria-describedby`. Invalid fields set `aria-invalid`.
-- Danger and warning alerts use `role="alert"`. Others use `role="status"`.
+- Danger alerts use `role="alert"`. Others (including static safety notices) use the
+  polite `role="status"`, so they are not read out urgently on every page load.
 - `prefers-reduced-motion` disables animations.
 - Buttons default to `type="button"` so they never submit forms by accident.
 
