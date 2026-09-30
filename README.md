@@ -15,8 +15,8 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phases 1–3 complete: project structure, design system and navigation, and
-resident/staff authentication.
+Phases 1–4 complete: project structure, design system and navigation,
+resident/staff authentication, and the resident dashboard.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
 the design system.
@@ -70,8 +70,9 @@ uv run python -m app.cli set-staff-active --email officer@example.gov.ph --inact
 ```
 
 For local development and walkthroughs, `uv run python -m app.cli seed-demo`
-creates two fictional **DEMO** accounts (refused in production). Both use the
-password `BeaconDemo-2026`:
+creates two fictional **DEMO** accounts and two DEMO reports for Leona
+(`BEA-2026-000123`, `BEA-2026-000087`). It is refused in production. Both
+accounts use the password `BeaconDemo-2026`:
 
 | Account                            | App            |
 | ---------------------------------- | -------------- |

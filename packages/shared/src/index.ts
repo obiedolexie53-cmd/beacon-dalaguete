@@ -4,3 +4,4 @@ export * from './referenceNumber';
 export * from './reportStatus';
 export * from './api';
 export * from './phone';
+export * from './format';

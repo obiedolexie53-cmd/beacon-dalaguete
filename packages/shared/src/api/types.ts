@@ -1,3 +1,5 @@
+import type { ReportStatus } from '../reportStatus';
+
 export type UserRole = 'resident' | 'mdrrmo' | 'admin';
 
 export interface Barangay {
@@ -29,4 +31,44 @@ export interface RegisterRequest {
   barangay_id: number;
   password: string;
   privacy_consent: boolean;
+}
+
+export interface HazardType {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface ReportSummary {
+  id: string;
+  reference_no: string;
+  hazard_type: HazardType;
+  other_hazard_text: string | null;
+  barangay: Barangay | null;
+  /** Local incident date, YYYY-MM-DD */
+  incident_date: string;
+  /** Local incident time, HH:MM:SS */
+  incident_time: string | null;
+  status: ReportStatus;
+  submitted_at: string;
+  is_demo: boolean;
+}
+
+export interface StatusCounts {
+  total: number;
+  submitted: number;
+  under_verification: number;
+  needs_clarification: number;
+  verified: number;
+  resolved: number;
+}
+
+export interface ResidentDashboard {
+  counts: StatusCounts;
+  recent_reports: ReportSummary[];
+}
+
+export interface ReportPage {
+  items: ReportSummary[];
+  total: number;
 }

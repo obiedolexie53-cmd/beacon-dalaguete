@@ -1,7 +1,14 @@
 import { render } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { AuthProvider } from '@beacon/auth';
-import { ApiClient, type SessionResponse, type UserProfile } from '@beacon/shared';
+import {
+  ApiClient,
+  type ReportSummary,
+  type ResidentDashboard,
+  type SessionResponse,
+  type StatusCounts,
+  type UserProfile,
+} from '@beacon/shared';
 import { routes } from '../app/routes';
 
 export const RESIDENT: UserProfile = {
@@ -32,12 +39,66 @@ export const anonymous: Handler = (path) =>
     ? json(401, { error: { code: 'session_expired', message: 'ended' } })
     : json(404, {});
 
-/** A handler for a signed-in resident. */
-export const signedIn: Handler = (path) => {
-  if (path === '/auth/refresh') return json(200, session());
-  if (path === '/auth/logout') return new Response(null, { status: 204 });
-  return json(404, {});
-};
+export function makeReport(overrides: Partial<ReportSummary> = {}): ReportSummary {
+  return {
+    id: 'r1',
+    reference_no: 'BEA-2026-000124',
+    hazard_type: { id: 1, code: 'flood', name: 'Flood' },
+    other_hazard_text: null,
+    barangay: { id: 23, name: 'Mantalongon' },
+    incident_date: '2026-09-29',
+    incident_time: '08:15:00',
+    status: 'submitted',
+    submitted_at: '2026-09-29T00:30:00Z',
+    is_demo: false,
+    ...overrides,
+  };
+}
+
+export const DEMO_REPORT = makeReport({
+  id: 'demo',
+  reference_no: 'BEA-2026-000123',
+  hazard_type: { id: 2, code: 'landslide', name: 'Landslide' },
+  incident_date: '2026-09-28',
+  incident_time: '16:35:00',
+  status: 'under_verification',
+  is_demo: true,
+});
+
+export function makeDashboard(
+  reports: ReportSummary[] = [makeReport(), DEMO_REPORT],
+  counts: Partial<StatusCounts> = {},
+): ResidentDashboard {
+  const base: StatusCounts = {
+    total: reports.length,
+    submitted: 0,
+    under_verification: 0,
+    needs_clarification: 0,
+    verified: 0,
+    resolved: 0,
+  };
+  for (const r of reports) base[r.status] += 1;
+  return { counts: { ...base, ...counts }, recent_reports: reports.slice(0, 3) };
+}
+
+/** A signed-in resident, with optional overrides for specific API paths. */
+export function signedInWith(overrides: Record<string, () => Response> = {}): Handler {
+  return (path) => {
+    const override = overrides[path];
+    if (override) return override();
+    if (path === '/auth/refresh') return json(200, session());
+    if (path === '/auth/logout') return new Response(null, { status: 204 });
+    if (path === '/me/dashboard') return json(200, makeDashboard());
+    if (path.startsWith('/me/reports')) {
+      const items = [makeReport(), DEMO_REPORT];
+      return json(200, { items, total: items.length });
+    }
+    return json(404, {});
+  };
+}
+
+/** A handler for a signed-in resident with two reports (one DEMO). */
+export const signedIn: Handler = signedInWith();
 
 /** Render the resident app at `path` against a fake API. */
 export function renderApp(path: string, handler: Handler) {

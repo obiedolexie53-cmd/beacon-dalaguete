@@ -19,3 +19,4 @@ export { PageHeader, type PageHeaderProps } from './components/PageHeader';
 export { Spinner } from './components/Spinner';
 export { StatusBadge } from './components/StatusBadge';
 export { LoadingScreen } from './components/LoadingScreen';
+export { Skeleton } from './components/Skeleton';

@@ -1,0 +1,129 @@
+import uuid
+from datetime import date, datetime, time
+from decimal import Decimal
+from enum import StrEnum
+
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Time,
+    func,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.db import Base
+from app.models.location import Barangay
+from app.models.user import User
+from app.reports.workflow import INITIAL_STATUS, ReportStatus
+
+
+def _enum(enum_cls: type[StrEnum], name: str) -> Enum:
+    return Enum(enum_cls, name=name, values_callable=lambda e: [m.value for m in e])
+
+
+class HazardType(Base):
+    """Hazard categories. Stored as data so the MDRRMO can add new ones without code changes."""
+
+    __tablename__ = "hazard_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(40), unique=True)
+    name: Mapped[str] = mapped_column(String(80))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+
+class LocationSource(StrEnum):
+    GPS = "gps"
+    MAP_PIN = "map_pin"
+    MANUAL = "manual"
+
+
+class ReportSequence(Base):
+    """Per-year counter behind reference numbers such as BEA-2026-000123."""
+
+    __tablename__ = "report_sequences"
+
+    year: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    last_value: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Report(Base):
+    __tablename__ = "reports"
+    __table_args__ = (
+        CheckConstraint("latitude BETWEEN -90 AND 90", name="latitude_range"),
+        CheckConstraint("longitude BETWEEN -180 AND 180", name="longitude_range"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    reference_no: Mapped[str] = mapped_column(String(20), unique=True)
+    reporter_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+
+    hazard_type_id: Mapped[int] = mapped_column(ForeignKey("hazard_types.id"), index=True)
+    other_hazard_text: Mapped[str | None] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(Text)
+    incident_date: Mapped[date] = mapped_column(Date)
+    incident_time: Mapped[time | None] = mapped_column(Time)
+
+    municipality: Mapped[str] = mapped_column(String(80), default="Dalaguete")
+    province: Mapped[str] = mapped_column(String(80), default="Cebu")
+    barangay_id: Mapped[int | None] = mapped_column(ForeignKey("barangays.id"), index=True)
+    landmark: Mapped[str | None] = mapped_column(String(200))
+    location_text: Mapped[str | None] = mapped_column(String(300))
+    # Plain coordinates for now; a PostGIS geography column is added with the map (Phase 11).
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
+    location_accuracy_m: Mapped[int | None] = mapped_column(Integer)
+    location_source: Mapped[LocationSource | None] = mapped_column(
+        _enum(LocationSource, "location_source")
+    )
+
+    status: Mapped[ReportStatus] = mapped_column(
+        _enum(ReportStatus, "report_status"), default=INITIAL_STATUS, index=True
+    )
+    verified_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    verification_notes: Mapped[str | None] = mapped_column(Text)
+    resolved_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolution_notes: Mapped[str | None] = mapped_column(Text)
+
+    is_demo: Mapped[bool] = mapped_column(default=False)
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    reporter: Mapped[User] = relationship(foreign_keys=[reporter_id])
+    hazard_type: Mapped[HazardType] = relationship(lazy="joined")
+    barangay: Mapped[Barangay | None] = relationship(lazy="joined")
+    history: Mapped[list["ReportStatusHistory"]] = relationship(
+        back_populates="report", order_by="ReportStatusHistory.changed_at"
+    )
+
+
+class ReportStatusHistory(Base):
+    """Append-only record of every status change (who, when, why)."""
+
+    __tablename__ = "report_status_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("reports.id", ondelete="CASCADE"), index=True
+    )
+    from_status: Mapped[ReportStatus | None] = mapped_column(_enum(ReportStatus, "report_status"))
+    to_status: Mapped[ReportStatus] = mapped_column(_enum(ReportStatus, "report_status"))
+    changed_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    note: Mapped[str | None] = mapped_column(Text)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    report: Mapped[Report] = relationship(back_populates="history")

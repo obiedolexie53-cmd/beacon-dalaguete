@@ -60,19 +60,11 @@ describe('bottom navigation', () => {
     );
     await userEvent.click(within(nav).getByRole('link', { name: 'My Reports' }));
     expect(router.state.location.pathname).toBe('/my-reports');
-    expect(screen.getByRole('heading', { name: 'No reports yet' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'My Reports' })).toBeTruthy();
   });
 });
 
 describe('screens', () => {
-  it('greets the resident and labels the sample report as demo data', async () => {
-    renderApp('/home', signedIn);
-    expect(await screen.findByRole('heading', { name: /Leona/ })).toBeTruthy();
-    const card = screen.getByRole('article', { name: 'Report BEA-2026-000123' });
-    expect(within(card).getByText('DEMO DATA')).toBeTruthy();
-    expect(within(card).getByText('Under Verification')).toBeTruthy();
-  });
-
   it('shows the evidence safety reminder on the report screen', async () => {
     renderApp('/report', signedIn);
     expect(

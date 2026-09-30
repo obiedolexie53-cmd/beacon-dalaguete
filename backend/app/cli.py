@@ -15,6 +15,7 @@ import argparse
 import getpass
 import sys
 from collections.abc import Sequence
+from datetime import timedelta
 
 from email_validator import EmailNotValidError, validate_email
 from sqlalchemy import select
@@ -25,7 +26,10 @@ from app.auth.validation import check_password_strength
 from app.core.config import get_settings
 from app.core.db import get_engine
 from app.core.security import hash_password
-from app.models import Barangay, User, UserRole
+from app.models import Barangay, HazardType, Report, ReportStatusHistory, User, UserRole
+from app.reports.reference import reserve_reference_number
+from app.reports.workflow import ReportStatus
+from seeds.demo_reports import DEMO_REPORTS
 
 DEMO_PASSWORD = "BeaconDemo-2026"  # noqa: S105  (development/test demo accounts only)
 
@@ -132,7 +136,64 @@ def seed_demo(db: Session) -> list[str]:
             )
         )
         created.append(email)
+    db.flush()
+    created.extend(_seed_demo_reports(db))
     db.commit()
+    return created
+
+
+def _seed_demo_reports(db: Session) -> list[str]:
+    reporter = db.scalar(select(User).where(User.email == DEMO_ACCOUNTS[0][1]))
+    officer = db.scalar(select(User).where(User.email == DEMO_ACCOUNTS[1][1]))
+    created: list[str] = []
+    for demo in DEMO_REPORTS:
+        year = demo.incident_date.year
+        reference_no = reserve_reference_number(db, year, demo.sequence)
+        if db.scalar(select(Report.id).where(Report.reference_no == reference_no)):
+            continue
+        report = Report(
+            reference_no=reference_no,
+            reporter_id=reporter.id,
+            hazard_type_id=db.scalar(
+                select(HazardType.id).where(HazardType.code == demo.hazard_code)
+            ),
+            description=demo.description,
+            incident_date=demo.incident_date,
+            incident_time=demo.incident_time,
+            barangay_id=db.scalar(select(Barangay.id).where(Barangay.name == demo.barangay)),
+            landmark=demo.landmark,
+            latitude=demo.latitude,
+            longitude=demo.longitude,
+            location_source="gps",
+            status=demo.history[-1][0] if demo.history else ReportStatus.SUBMITTED,
+            is_demo=True,
+            submitted_at=demo.submitted_at,
+        )
+        db.add(report)
+        db.flush()
+        db.add(
+            ReportStatusHistory(
+                report_id=report.id,
+                from_status=None,
+                to_status=ReportStatus.SUBMITTED,
+                changed_by_id=reporter.id,
+                changed_at=demo.submitted_at,
+            )
+        )
+        previous = ReportStatus.SUBMITTED
+        for step, (status, note) in enumerate(demo.history, start=1):
+            db.add(
+                ReportStatusHistory(
+                    report_id=report.id,
+                    from_status=previous,
+                    to_status=status,
+                    changed_by_id=officer.id,
+                    note=note,
+                    changed_at=demo.submitted_at + timedelta(hours=step),
+                )
+            )
+            previous = status
+        created.append(reference_no)
     return created
 
 
@@ -172,8 +233,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"{user.email} is now {'active' if user.is_active else 'disabled'}")
             elif args.command == "seed-demo":
                 created = seed_demo(db)
-                for email in created:
-                    print(f"Created DEMO account {email}")
+                for item in created:
+                    print(f"Created DEMO record {item}")
                 print(f"Demo password: {DEMO_PASSWORD}" if created else "Demo accounts exist")
     except CliError as exc:
         print(f"Error: {exc}", file=sys.stderr)

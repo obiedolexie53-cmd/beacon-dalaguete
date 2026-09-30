@@ -216,6 +216,17 @@ analysis_runs                      -- cached ML results for reproducibility
   id · run_at · params (jsonb) · dataset_filter (jsonb) · results (jsonb) · algorithm_version
 ```
 
+**Implementation notes (Phase 4):**
+
+- Reference numbers come from a `report_sequences (year, last_value)` table,
+  incremented with one atomic `INSERT … ON CONFLICT DO UPDATE … RETURNING`, so
+  concurrent submissions never get the same number. Fixed DEMO numbers (e.g.
+  `BEA-2026-000123`) are reserved, so real reports never reuse them.
+- `incident_date` / `incident_time` are the local time in Dalaguete
+  (Asia/Manila). `submitted_at` is a UTC timestamp shown in Philippine time.
+- Coordinates are stored as `latitude` / `longitude` numerics for now. A PostGIS
+  `geography` column and spatial index are added with the disaster map (Phase 11).
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 
