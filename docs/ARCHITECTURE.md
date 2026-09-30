@@ -310,6 +310,19 @@ too_many_reports`), with a message pointing to the MDRRMO.
   unread count every minute and when it is reopened, and shows a badge on the
   Notifications tab. Web push is an optional later addition (§8).
 
+**Implementation notes (Phase 9):**
+
+- `GET /api/v1/staff/dashboard` (MDRRMO/admin only) returns counts for every
+  status across all residents and the 10 most recently submitted reports.
+  "New" means submitted and not yet picked up for verification. The overview
+  carries no reporter details; those appear only in the report review screen
+  (Phase 10), where access is audited.
+- `include_demo=false` leaves out fictional DEMO records, so evaluators can see
+  real figures only. The console has an "Include DEMO DATA" switch, and demo
+  rows are labelled.
+- The dashboard refreshes itself every minute while visible, shows when it was
+  last updated, and keeps the last figures on screen if a refresh fails.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

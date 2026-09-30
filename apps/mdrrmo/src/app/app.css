@@ -134,7 +134,7 @@
 /* ----- Dashboard ----- */
 .m-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--bcn-space-4);
 }
 .m-stat {
@@ -163,6 +163,8 @@
 }
 .m-table {
   width: 100%;
+  /* Scroll sideways on small screens rather than squeezing every column. */
+  min-width: 900px;
   border-collapse: collapse;
   font-size: var(--bcn-text-sm);
 }
@@ -224,4 +226,31 @@
 .m-signout:hover {
   color: var(--bcn-text-inverse);
   text-decoration: underline;
+}
+
+.m-refresh {
+  display: flex;
+  align-items: center;
+  gap: var(--bcn-space-3);
+  font-size: var(--bcn-text-sm);
+}
+.m-ref-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bcn-space-1) var(--bcn-space-2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.m-col-date {
+  min-width: 190px;
+}
+.m-cell-note {
+  display: block;
+  color: var(--bcn-text-muted);
+  font-size: var(--bcn-text-xs);
+}
+.m-stat__value {
+  font-variant-numeric: tabular-nums;
 }

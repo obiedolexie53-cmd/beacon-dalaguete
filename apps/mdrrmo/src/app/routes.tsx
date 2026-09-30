@@ -5,6 +5,7 @@ import { StaffLoginPage } from '../features/auth/StaffLoginPage';
 import { RequireStaff } from './guards';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
+import { ReportReviewPage } from '../features/reports/ReportReviewPage';
 import { MapPage } from '../features/map/MapPage';
 import { HistoryPage } from '../features/history/HistoryPage';
 import { AnalysisPage } from '../features/analysis/AnalysisPage';
@@ -22,6 +23,7 @@ export const routes: RouteObject[] = [
       { path: '/', element: <Navigate to="/dashboard" replace /> },
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/reports', element: <ReportsPage /> },
+      { path: '/reports/:referenceNo', element: <ReportReviewPage /> },
       { path: '/map', element: <MapPage /> },
       { path: '/history', element: <HistoryPage /> },
       { path: '/analysis', element: <AnalysisPage /> },

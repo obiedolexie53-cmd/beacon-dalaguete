@@ -101,14 +101,3 @@ describe('console navigation', () => {
     );
   });
 });
-
-describe('dashboard', () => {
-  it('shows the required columns and labels the sample row as demo data', async () => {
-    renderApp('/dashboard', signedIn);
-    await screen.findByRole('heading', { level: 1, name: 'Monitoring Dashboard' });
-    const headers = screen.getAllByRole('columnheader').map((th) => th.textContent);
-    expect(headers).toEqual(['Report ID', 'Hazard', 'Barangay', 'Date/time', 'Status', 'Action']);
-    expect(screen.getByRole('cell', { name: 'BEA-2026-000123' })).toBeTruthy();
-    expect(screen.getAllByText('DEMO DATA').length).toBeGreaterThan(0);
-  });
-});

@@ -135,3 +135,33 @@ export interface ReportCreateRequest {
   location_accuracy_m: number | null;
   location_source: 'gps' | 'map_pin' | null;
 }
+
+/** MDRRMO console */
+export interface StaffStatusCounts {
+  total: number;
+  new: number;
+  under_verification: number;
+  needs_clarification: number;
+  verified: number;
+  resolved: number;
+}
+
+export interface StaffReportRow {
+  id: string;
+  reference_no: string;
+  hazard_type: HazardType;
+  other_hazard_text: string | null;
+  barangay: Barangay | null;
+  incident_date: string;
+  incident_time: string | null;
+  submitted_at: string;
+  status: ReportStatus;
+  is_demo: boolean;
+}
+
+export interface StaffDashboard {
+  counts: StaffStatusCounts;
+  recent_reports: StaffReportRow[];
+  include_demo: boolean;
+  generated_at: string;
+}

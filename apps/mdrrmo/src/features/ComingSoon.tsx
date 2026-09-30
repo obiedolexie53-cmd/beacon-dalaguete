@@ -22,7 +22,7 @@ export function ComingSoon({
       <Card>
         <EmptyState
           icon={icon}
-          title="No reports available"
+          title={`Coming in ${phase}`}
           description={`This section is built in ${phase}.`}
         />
       </Card>
