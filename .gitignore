@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Uploaded evidence (never commit media)
+backend/media/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

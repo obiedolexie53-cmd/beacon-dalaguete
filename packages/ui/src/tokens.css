@@ -1,0 +1,29 @@
+/*
+ * BEACON design tokens (initial palette).
+ * Phase 2 expands this into the full design system (typography, spacing,
+ * components). Both apps import this file so the look stays consistent.
+ */
+:root {
+  --beacon-color-primary: #0b2545; /* Deep Navy Blue */
+  --beacon-color-secondary: #1d6fd6; /* Beacon Blue */
+  --beacon-color-accent: #f2a900; /* Golden Amber */
+  --beacon-color-success: #1e8e3e;
+  --beacon-color-warning: #e8710a;
+  --beacon-color-danger: #c62828;
+  --beacon-color-background: #f3f6fa; /* Very light blue/gray */
+  --beacon-color-surface: #ffffff; /* Cards */
+  --beacon-color-text: #172033; /* Dark charcoal/navy */
+  --beacon-color-text-muted: #4a5568;
+
+  --beacon-radius-card: 16px;
+  --beacon-touch-target: 48px;
+  --beacon-font-family:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--beacon-color-background);
+  color: var(--beacon-color-text);
+  font-family: var(--beacon-font-family);
+}

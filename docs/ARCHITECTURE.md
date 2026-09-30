@@ -1,15 +1,18 @@
-# BEACON — Architecture Proposal (Phase 1)
+# BEACON — Architecture (Phase 1)
 
 **BEACON: A Community-Based Disaster Reporting and Monitoring Application with
 Machine Learning-Assisted Hazard Pattern Analysis**
 Municipality of Dalaguete, Cebu, Philippines
 
-> Status: **PROPOSAL, awaiting approval.** No framework has been installed yet.
-> This document records the recommended technical direction before any major
-> architectural decision is locked in.
+> Status: **APPROVED (2026-09-30).** Stack: React + TypeScript PWA (resident),
+> React + TypeScript web console (MDRRMO), Python FastAPI API,
+> PostgreSQL + PostGIS. Phase 1 scaffold implemented.
+>
+> Tooling note: TypeScript is pinned to 6.0.x because typescript-eslint does
+> not yet support TypeScript 7.
 
 BEACON is a reporting and monitoring tool. It is **not** a disaster prediction
-system. The ML component analyses *recorded* reports to surface recurring
+system. The ML component analyses _recorded_ reports to surface recurring
 hazard patterns; verification and all decisions remain with authorized MDRRMO
 personnel.
 
@@ -17,13 +20,13 @@ personnel.
 
 ## 0. Findings from inspecting the repository and environment
 
-| Item | Finding |
-|---|---|
-| Repository | Empty (no commits, no existing code or conventions to follow) |
-| Node.js / npm / pnpm | v22 / 10.9 / 10.33 available |
-| Python | 3.11 available |
-| PostgreSQL | 16 client available; Docker 29 available for a local DB |
-| Flutter / Dart / Android SDK | **Not installed** |
+| Item                         | Finding                                                       |
+| ---------------------------- | ------------------------------------------------------------- |
+| Repository                   | Empty (no commits, no existing code or conventions to follow) |
+| Node.js / npm / pnpm         | v22 / 10.9 / 10.33 available                                  |
+| Python                       | 3.11 available                                                |
+| PostgreSQL                   | 16 client available; Docker 29 available for a local DB       |
+| Flutter / Dart / Android SDK | **Not installed**                                             |
 
 Because the repository is empty, the architecture below is a fresh proposal.
 It uses tooling that is already available so development and testing can
@@ -74,22 +77,23 @@ Why this shape:
 
 ## 2. Recommended technology stack
 
-| Layer | Recommendation | Reason |
-|---|---|---|
-| Resident app | **React + TypeScript + Vite, as a PWA** | Works on any Android or iPhone browser and installs to the home screen with no app store. Uses browser camera, video capture and Geolocation APIs. Easy to hand to evaluators with a link. Can be wrapped with **Capacitor** later if a native APK is required. |
-| MDRRMO console | React + TypeScript + Vite (separate app) | Shares the design system and types with the resident app |
-| Shared UI | Design tokens + component library (`packages/ui`) | One consistent design system across both apps |
-| Maps | **Leaflet + OpenStreetMap** tiles | No API key or billing account needed. Good coverage of Dalaguete. |
-| Charts | Recharts (or Chart.js) | Bar, line, heatmap and trend charts for pattern visualization |
-| API | **Python 3.11 + FastAPI + SQLAlchemy 2 + Alembic** | Typed and fast, generates OpenAPI docs automatically. Same language as the ML stack. |
-| ML / analysis | **pandas, scikit-learn** (DBSCAN with haversine distance), numpy | Standard, explainable, well-documented techniques that suit a thesis write-up |
-| Database | **PostgreSQL 16 + PostGIS** | Relational integrity for reports and history. Spatial queries for maps and hotspots. |
-| Media storage | Private local folder (dev) → S3-compatible bucket (deploy) | Media is only served through authenticated API endpoints |
-| Auth | JWT access token + rotating refresh token (httpOnly cookie), Argon2 password hashing | See §5 |
-| Testing | pytest (API/ML), Vitest + Testing Library (UI), Playwright (end-to-end) | |
-| Dev environment | Docker Compose (Postgres/PostGIS), pnpm workspaces | One command to start everything locally |
+| Layer           | Recommendation                                                                       | Reason                                                                                                                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resident app    | **React + TypeScript + Vite, as a PWA**                                              | Works on any Android or iPhone browser and installs to the home screen with no app store. Uses browser camera, video capture and Geolocation APIs. Easy to hand to evaluators with a link. Can be wrapped with **Capacitor** later if a native APK is required. |
+| MDRRMO console  | React + TypeScript + Vite (separate app)                                             | Shares the design system and types with the resident app                                                                                                                                                                                                        |
+| Shared UI       | Design tokens + component library (`packages/ui`)                                    | One consistent design system across both apps                                                                                                                                                                                                                   |
+| Maps            | **Leaflet + OpenStreetMap** tiles                                                    | No API key or billing account needed. Good coverage of Dalaguete.                                                                                                                                                                                               |
+| Charts          | Recharts (or Chart.js)                                                               | Bar, line, heatmap and trend charts for pattern visualization                                                                                                                                                                                                   |
+| API             | **Python 3.11 + FastAPI + SQLAlchemy 2 + Alembic**                                   | Typed and fast, generates OpenAPI docs automatically. Same language as the ML stack.                                                                                                                                                                            |
+| ML / analysis   | **pandas, scikit-learn** (DBSCAN with haversine distance), numpy                     | Standard, explainable, well-documented techniques that suit a thesis write-up                                                                                                                                                                                   |
+| Database        | **PostgreSQL 16 + PostGIS**                                                          | Relational integrity for reports and history. Spatial queries for maps and hotspots.                                                                                                                                                                            |
+| Media storage   | Private local folder (dev) → S3-compatible bucket (deploy)                           | Media is only served through authenticated API endpoints                                                                                                                                                                                                        |
+| Auth            | JWT access token + rotating refresh token (httpOnly cookie), Argon2 password hashing | See §5                                                                                                                                                                                                                                                          |
+| Testing         | pytest (API/ML), Vitest + Testing Library (UI), Playwright (end-to-end)              |                                                                                                                                                                                                                                                                 |
+| Dev environment | Docker Compose (Postgres/PostGIS), pnpm workspaces                                   | One command to start everything locally                                                                                                                                                                                                                         |
 
 **Alternatives considered:**
+
 - **Flutter:** good for native apps, but it isn't installed here, and the
   MDRRMO web console would need a second stack or Flutter Web.
 - **Supabase / Firebase BaaS:** faster to start, but it ties the project to a
@@ -254,19 +258,19 @@ a `report_status_history` row and a notification to the reporter.
 
 ## 6. Main application modules
 
-| Module | Resident | MDRRMO |
-|---|---|---|
-| Auth & accounts | register, login, profile | secure login (authorized accounts) |
-| Reporting wizard | hazard → details → location → evidence → review → submit → confirmation | – |
-| Location / GPS | current GPS, map pin, barangay, landmark, permission-denied fallback | incident map in detail view |
-| Evidence | capture/select/preview/remove/replace photos and videos, safety reminder | photo/video viewer |
-| Report tracking | My Reports, details, status timeline | – |
-| Notifications | in-app status updates (web push optional) | – |
-| Monitoring dashboard | – | totals by status, recent reports table |
-| Reports & verification | – | search, filter, detail, status actions with notes, history |
-| Disaster map | – | markers, filters (hazard, barangay, date, status), marker summary |
-| Historical reports | – | date-range browsing and export |
-| **ML-Assisted Hazard Pattern Analysis** | – | 4.1 / 4.2 / 4.3 below |
+| Module                                  | Resident                                                                 | MDRRMO                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Auth & accounts                         | register, login, profile                                                 | secure login (authorized accounts)                                |
+| Reporting wizard                        | hazard → details → location → evidence → review → submit → confirmation  | –                                                                 |
+| Location / GPS                          | current GPS, map pin, barangay, landmark, permission-denied fallback     | incident map in detail view                                       |
+| Evidence                                | capture/select/preview/remove/replace photos and videos, safety reminder | photo/video viewer                                                |
+| Report tracking                         | My Reports, details, status timeline                                     | –                                                                 |
+| Notifications                           | in-app status updates (web push optional)                                | –                                                                 |
+| Monitoring dashboard                    | –                                                                        | totals by status, recent reports table                            |
+| Reports & verification                  | –                                                                        | search, filter, detail, status actions with notes, history        |
+| Disaster map                            | –                                                                        | markers, filters (hazard, barangay, date, status), marker summary |
+| Historical reports                      | –                                                                        | date-range browsing and export                                    |
+| **ML-Assisted Hazard Pattern Analysis** | –                                                                        | 4.1 / 4.2 / 4.3 below                                             |
 
 **ML-Assisted Hazard Pattern Analysis (descriptive, not predictive):**
 
@@ -275,8 +279,8 @@ a `report_status_history` row and a notification to the reporter.
   occurrence tables.
 - **4.2 Hazard Pattern Identification:**
   - Frequency ranking of hazard types and barangays.
-  - **DBSCAN spatial clustering** (haversine) to find *recurring hazard
-    locations*.
+  - **DBSCAN spatial clustering** (haversine) to find _recurring hazard
+    locations_.
   - Hazard × barangay co-occurrence.
   - Temporal recurrence (e.g. months with repeated reports).
   - Trend direction within the recorded dataset (rolling counts).
@@ -285,8 +289,8 @@ a `report_status_history` row and a notification to the reporter.
 
 By default, analysis uses **verified** reports. Staff can choose to include
 unverified reports, and the page shows which dataset was analysed. All
-generated text comes from templates in `wording.py`, e.g. *"Recurring landslide
-incidents were identified in the recorded dataset for Barangay Mantalongon."*
+generated text comes from templates in `wording.py`, e.g. _"Recurring landslide
+incidents were identified in the recorded dataset for Barangay Mantalongon."_
 The system never produces statements such as "this area will experience…".
 A permanent notice states that the analysis supports, and does not replace,
 MDRRMO assessment.
@@ -295,23 +299,23 @@ MDRRMO assessment.
 
 ## 7. Development phases
 
-| # | Phase | Main deliverable |
-|---|---|---|
-| 1 | Project structure & architecture | this document, monorepo scaffold, Docker Compose, CI lint/test |
-| 2 | UI/design system & navigation | tokens (Deep Navy, Beacon Blue, Golden Amber…), components, both app shells |
-| 3 | Resident authentication | register/login/refresh/logout, RBAC, MDRRMO account script |
-| 4 | Resident dashboard | home, quick "Report a Disaster", recent reports |
-| 5 | Disaster reporting | wizard steps 1–2, validation, draft saving |
-| 6 | Location/GPS | geolocation, map pin, barangay, landmark, denied-permission state |
-| 7 | Photo/video evidence | capture/select/preview/replace, upload validation, safety reminder |
-| 8 | Submission & status tracking | reference number, confirmation, My Reports, notifications |
-| 9 | MDRRMO dashboard | counts, recent reports table |
-| 10 | Review & verification | detail view, media viewer, status workflow + history |
-| 11 | Disaster map | Leaflet map, filters, marker summaries |
-| 12 | Historical report analysis | historical browsing, 4.1 aggregations |
-| 13 | ML-assisted pattern analysis | 4.2 clustering/frequency/trend module + tests |
-| 14 | Pattern visualization | 4.3 charts, heatmaps, hotspot layer |
-| 15 | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states |
+| #   | Phase                               | Main deliverable                                                            |
+| --- | ----------------------------------- | --------------------------------------------------------------------------- |
+| 1   | Project structure & architecture    | this document, monorepo scaffold, Docker Compose, CI lint/test              |
+| 2   | UI/design system & navigation       | tokens (Deep Navy, Beacon Blue, Golden Amber…), components, both app shells |
+| 3   | Resident authentication             | register/login/refresh/logout, RBAC, MDRRMO account script                  |
+| 4   | Resident dashboard                  | home, quick "Report a Disaster", recent reports                             |
+| 5   | Disaster reporting                  | wizard steps 1–2, validation, draft saving                                  |
+| 6   | Location/GPS                        | geolocation, map pin, barangay, landmark, denied-permission state           |
+| 7   | Photo/video evidence                | capture/select/preview/replace, upload validation, safety reminder          |
+| 8   | Submission & status tracking        | reference number, confirmation, My Reports, notifications                   |
+| 9   | MDRRMO dashboard                    | counts, recent reports table                                                |
+| 10  | Review & verification               | detail view, media viewer, status workflow + history                        |
+| 11  | Disaster map                        | Leaflet map, filters, marker summaries                                      |
+| 12  | Historical report analysis          | historical browsing, 4.1 aggregations                                       |
+| 13  | ML-assisted pattern analysis        | 4.2 clustering/frequency/trend module + tests                               |
+| 14  | Pattern visualization               | 4.3 charts, heatmaps, hotspot layer                                         |
+| 15  | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states          |
 
 Error and empty states (offline, failed submission, missing fields, location
 denied, no reports, failed upload, session expired) are built alongside each
@@ -326,16 +330,16 @@ Docker, OpenStreetMap tiles, and local media storage.
 
 **Needed later for a deployed, evaluable prototype:**
 
-| Need | Options | Credential |
-|---|---|---|
-| Hosting (API + DB) | VPS, Render, Railway, Fly.io, or a municipal server | account + DB connection string |
-| Front-end hosting | Netlify, Vercel, Cloudflare Pages, or same VPS | account |
-| Domain + HTTPS | any registrar; Let's Encrypt | required for camera/GPS in browsers |
-| Media storage | S3-compatible (Cloudflare R2, Backblaze B2, AWS S3, MinIO) | access key + secret |
-| Email (password reset / verification) | SMTP (e.g. Brevo, Mailgun, Gmail SMTP) | SMTP credentials (optional) |
-| Web push notifications | VAPID keys (self-generated, no account) | optional |
-| SMS notifications | Semaphore, Twilio | optional, paid |
-| Map tiles at scale | OSM policy is fine for a prototype; MapTiler/Stadia for heavier use | optional API key |
+| Need                                  | Options                                                             | Credential                          |
+| ------------------------------------- | ------------------------------------------------------------------- | ----------------------------------- |
+| Hosting (API + DB)                    | VPS, Render, Railway, Fly.io, or a municipal server                 | account + DB connection string      |
+| Front-end hosting                     | Netlify, Vercel, Cloudflare Pages, or same VPS                      | account                             |
+| Domain + HTTPS                        | any registrar; Let's Encrypt                                        | required for camera/GPS in browsers |
+| Media storage                         | S3-compatible (Cloudflare R2, Backblaze B2, AWS S3, MinIO)          | access key + secret                 |
+| Email (password reset / verification) | SMTP (e.g. Brevo, Mailgun, Gmail SMTP)                              | SMTP credentials (optional)         |
+| Web push notifications                | VAPID keys (self-generated, no account)                             | optional                            |
+| SMS notifications                     | Semaphore, Twilio                                                   | optional, paid                      |
+| Map tiles at scale                    | OSM policy is fine for a prototype; MapTiler/Stadia for heavier use | optional API key                    |
 
 Secrets go in `.env` files that are never committed. `.env.example` files
 document each variable.
@@ -363,5 +367,5 @@ screen aligned with the **Data Privacy Act of 2012 (RA 10173)**.
 
 ---
 
-*All sample people, reports, and coordinates in this project are DEMO DATA and
-do not represent actual current disasters.*
+_All sample people, reports, and coordinates in this project are DEMO DATA and
+do not represent actual current disasters._
