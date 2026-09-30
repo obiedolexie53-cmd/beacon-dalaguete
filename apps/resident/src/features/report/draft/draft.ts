@@ -16,8 +16,25 @@ export interface ReportDraft {
   description: string;
   incidentDate: string;
   incidentTime: string;
+  barangayId: number | null;
+  barangayName: string | null;
+  landmark: string;
+  latitude: number | null;
+  longitude: number | null;
+  locationAccuracyM: number | null;
+  locationSource: 'gps' | 'map_pin' | null;
   updatedAt: string;
 }
+
+const LOCATION_DEFAULTS = {
+  barangayId: null,
+  barangayName: null,
+  landmark: '',
+  latitude: null,
+  longitude: null,
+  locationAccuracyM: null,
+  locationSource: null,
+} satisfies Partial<ReportDraft>;
 
 const KEY_PREFIX = 'beacon.reportDraft.';
 
@@ -33,6 +50,7 @@ export function newDraft(now: Date = new Date()): ReportDraft {
     description: '',
     incidentDate: local.date,
     incidentTime: local.time,
+    ...LOCATION_DEFAULTS,
     updatedAt: now.toISOString(),
   };
 }
@@ -48,7 +66,8 @@ export function loadDraft(userId: string): ReportDraft | null {
   try {
     const raw = localStorage.getItem(KEY_PREFIX + userId);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
-    return isDraft(parsed) ? parsed : null;
+    // Drafts saved before the location step existed get empty location fields.
+    return isDraft(parsed) ? { ...LOCATION_DEFAULTS, ...parsed } : null;
   } catch {
     return null;
   }

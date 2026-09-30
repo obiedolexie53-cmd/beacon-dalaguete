@@ -243,6 +243,25 @@ too_many_reports`), with a message pointing to the MDRRMO.
   user). They are deleted on submission, on discard, and on logout for shared
   phones, and they are disclosed in the privacy notice.
 
+**Implementation notes (Phase 6):**
+
+- The location step offers three ways to locate an incident: the phone's GPS
+  ("Use my current location"), tapping or dragging a pin on an OpenStreetMap
+  map (Leaflet), and a nearby landmark. A barangay is always required, and
+  either a map pin or a landmark must be given. Permission denied, no signal,
+  timeout and non-HTTPS pages each get a clear message pointing to the map or
+  landmark instead.
+- Coordinates must fall inside a generous box around Dalaguete (lat 9.60–10.00,
+  lng 123.30–123.70), checked in the app and by the API. The official
+  municipal boundary polygon can replace this once the MDRRMO provides it.
+- GPS readings less precise than 100 m are flagged so the resident can adjust
+  the pin. Accuracy and the source (`gps` / `map_pin`) are stored with the report.
+- Map tiles need an internet connection and are not cached by the service
+  worker. OpenStreetMap's tile usage policy is fine for a research prototype;
+  switch to a hosted tile provider (see §8) for wider rollout.
+- Keyboard users can pan the map with the arrow keys and use "Place pin at map
+  centre", since dragging a pin needs a pointer.
+
 **Status workflow** (enforced in the API; a new report always starts as
 `submitted`):
 

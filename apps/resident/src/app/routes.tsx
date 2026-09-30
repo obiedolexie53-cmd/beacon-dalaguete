@@ -12,6 +12,7 @@ import { ReportStartScreen } from '../features/report/ReportStartScreen';
 import { ReportWizard } from '../features/report/ReportWizard';
 import { DetailsStep } from '../features/report/steps/DetailsStep';
 import { HazardStep } from '../features/report/steps/HazardStep';
+import { LocationStep } from '../features/report/steps/LocationStep';
 import { UpcomingStep } from '../features/report/steps/UpcomingStep';
 import { MyReportsScreen } from '../features/my-reports/MyReportsScreen';
 import { NotificationsScreen } from '../features/notifications/NotificationsScreen';
@@ -60,13 +61,14 @@ export const routes: RouteObject[] = [
         children: [
           { path: 'hazard', element: <HazardStep /> },
           { path: 'details', element: <DetailsStep /> },
+          { path: 'location', element: <LocationStep /> },
           {
-            path: 'location',
+            path: 'evidence',
             element: (
               <UpcomingStep
-                title="Incident location"
-                phase="Phase 6"
-                backTo="/report/new/details"
+                title="Photo/video evidence"
+                phase="Phase 7"
+                backTo="/report/new/location"
               />
             ),
           },

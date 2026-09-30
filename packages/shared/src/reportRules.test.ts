@@ -4,6 +4,7 @@ import {
   localNow,
   validateDetailsStep,
   validateHazardStep,
+  validateLocationStep,
 } from './reportRules';
 import { uuidv4 } from './uuid';
 
@@ -93,5 +94,30 @@ describe('uuidv4', () => {
     } finally {
       Object.defineProperty(crypto, 'randomUUID', { value: original, configurable: true });
     }
+  });
+});
+
+describe('validateLocationStep', () => {
+  const base = { barangayId: 23, landmark: '', latitude: 9.8412, longitude: 123.4873 };
+
+  it('accepts a pin inside Dalaguete without a landmark', () => {
+    expect(validateLocationStep(base)).toEqual({});
+  });
+
+  it('requires a barangay', () => {
+    expect(validateLocationStep({ ...base, barangayId: null })).toHaveProperty('barangay');
+  });
+
+  it('needs a landmark when there is no pin (e.g. location permission denied)', () => {
+    const noPin = { ...base, latitude: null, longitude: null };
+    expect(validateLocationStep(noPin)).toHaveProperty('landmark');
+    expect(validateLocationStep({ ...noPin, landmark: 'Near the chapel' })).toEqual({});
+  });
+
+  it('flags pins outside Dalaguete', () => {
+    // Cebu City
+    expect(
+      validateLocationStep({ ...base, latitude: 10.3157, longitude: 123.8854 }),
+    ).toHaveProperty('map');
   });
 });

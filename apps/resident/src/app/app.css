@@ -425,3 +425,52 @@
   margin: 0;
   padding-left: var(--bcn-space-5);
 }
+
+/* ----- Location step ----- */
+.r-card-heading {
+  margin: 0;
+  font-size: var(--bcn-text-lg);
+}
+.r-map {
+  position: relative;
+}
+.r-map__canvas {
+  height: 300px;
+  border-radius: var(--bcn-radius-md);
+  border: 1px solid var(--bcn-border);
+  /* Keep Leaflet's panes below the sticky top bar and bottom navigation. */
+  z-index: 0;
+  isolation: isolate;
+}
+.r-map__center-button {
+  position: absolute;
+  left: var(--bcn-space-2);
+  bottom: calc(var(--bcn-space-2) + 18px);
+  z-index: 1;
+  box-shadow: var(--bcn-shadow-raised);
+}
+.r-map-help {
+  margin: 0;
+  font-size: var(--bcn-text-sm);
+  color: var(--bcn-text-muted);
+}
+.r-map-pin {
+  background: none;
+  border: none;
+}
+.r-coordinates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bcn-space-2);
+  font-size: var(--bcn-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.r-fixed-field {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--bcn-space-3) var(--bcn-space-4);
+  border-radius: var(--bcn-radius-md);
+  background: var(--bcn-surface-muted);
+  border: 1px solid var(--bcn-border);
+}

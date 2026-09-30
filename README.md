@@ -16,8 +16,9 @@ all decisions remain with MDRRMO personnel.
 ## Status
 
 Phases 1–5 complete: project structure, design system and navigation,
-resident/staff authentication, the resident dashboard, and the first two
-reporting steps (hazard type, incident details) with on-device drafts.
+resident/staff authentication, the resident dashboard, and the first three
+reporting steps (hazard type, incident details, location with GPS and map) with
+on-device drafts.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
 the design system.

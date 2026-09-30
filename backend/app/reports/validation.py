@@ -9,7 +9,13 @@ DESCRIPTION_MIN = 10
 DESCRIPTION_MAX = 2000
 OTHER_HAZARD_MIN = 3
 OTHER_HAZARD_MAX = 120
+LANDMARK_MIN = 3
 LANDMARK_MAX = 200
+
+# Generous box around the Municipality of Dalaguete. Reports are for the Dalaguete
+# MDRRMO, but GPS near the municipal border can drift, so this is wider than the
+# official boundary. Mirrored in packages/shared/src/location.ts.
+SERVICE_AREA = {"min_lat": 9.60, "max_lat": 10.00, "min_lng": 123.30, "max_lng": 123.70}
 # Reports are for recent incidents; older events are recorded by the MDRRMO directly.
 MAX_INCIDENT_AGE_DAYS = 365
 # Allow for a phone clock that runs a little fast.
@@ -34,3 +40,10 @@ def check_incident_time(incident_date: date, incident_time: time) -> None:
     moment = datetime.combine(incident_date, incident_time, tzinfo=LOCAL_TZ)
     if moment > local_now() + CLOCK_SKEW:
         raise ValueError("The incident time cannot be in the future")
+
+
+def in_service_area(latitude: float, longitude: float) -> bool:
+    return (
+        SERVICE_AREA["min_lat"] <= latitude <= SERVICE_AREA["max_lat"]
+        and SERVICE_AREA["min_lng"] <= longitude <= SERVICE_AREA["max_lng"]
+    )

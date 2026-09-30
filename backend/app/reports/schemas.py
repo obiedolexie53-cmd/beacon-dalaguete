@@ -17,9 +17,11 @@ from app.reports.validation import (
     DESCRIPTION_MAX,
     DESCRIPTION_MIN,
     LANDMARK_MAX,
+    LANDMARK_MIN,
     OTHER_HAZARD_MAX,
     check_incident_date,
     check_incident_time,
+    in_service_area,
 )
 from app.reports.workflow import ReportStatus
 
@@ -78,11 +80,12 @@ class ReportCreate(BaseModel):
     incident_date: date
     incident_time: time | None = None
     barangay_id: int
-    landmark: str | None = Field(default=None, max_length=LANDMARK_MAX)
     latitude: Decimal | None = Field(default=None, ge=-90, le=90, decimal_places=6)
     longitude: Decimal | None = Field(default=None, ge=-180, le=180, decimal_places=6)
     location_accuracy_m: int | None = Field(default=None, ge=0, le=100_000)
     location_source: LocationSource | None = None
+    # Declared after the coordinates so its validator can see them.
+    landmark: str | None = Field(default=None, max_length=LANDMARK_MAX, validate_default=True)
 
     @field_validator("description")
     @classmethod
@@ -94,10 +97,30 @@ class ReportCreate(BaseModel):
             raise ValueError(f"Keep the description under {DESCRIPTION_MAX} characters")
         return value
 
-    @field_validator("other_hazard_text", "landmark")
+    @field_validator("other_hazard_text")
     @classmethod
     def _blank_is_none(cls, value: str | None) -> str | None:
         return " ".join(value.split()) or None if value else None
+
+    @field_validator("longitude")
+    @classmethod
+    def _inside_dalaguete(cls, value: Decimal | None, info: ValidationInfo) -> Decimal | None:
+        latitude = info.data.get("latitude")
+        if value is not None and latitude is not None:
+            if not in_service_area(float(latitude), float(value)):
+                raise ValueError("The location appears to be outside Dalaguete")
+        return value
+
+    @field_validator("landmark")
+    @classmethod
+    def _landmark(cls, value: str | None, info: ValidationInfo) -> str | None:
+        value = " ".join(value.split()) or None if value else None
+        # Without a map position, a landmark is how responders find the place.
+        has_coordinates = info.data.get("latitude") is not None
+        coordinates_valid = "latitude" in info.data and "longitude" in info.data
+        if coordinates_valid and not has_coordinates and (not value or len(value) < LANDMARK_MIN):
+            raise ValueError("Add a nearby landmark, or set the location on the map")
+        return value
 
     @field_validator("incident_date")
     @classmethod

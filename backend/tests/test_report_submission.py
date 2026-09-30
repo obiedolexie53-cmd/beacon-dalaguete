@@ -132,6 +132,9 @@ def test_other_hazard_text_is_dropped_for_named_hazards(
         ({"barangay_id": 999_999}, "barangay_id"),
         ({"client_request_id": "not-a-uuid"}, "client_request_id"),
         ({"latitude": "9.8"}, "request"),
+        ({"latitude": "10.3157", "longitude": "123.8854"}, "longitude"),
+        ({"landmark": None}, "landmark"),
+        ({"landmark": " x "}, "landmark"),
     ],
 )
 def test_report_validation(
@@ -188,3 +191,20 @@ def test_new_report_appears_on_the_dashboard(api: TestClient, db: Session, resid
     dashboard = api.get("/api/v1/me/dashboard", headers=auth).json()
     assert dashboard["counts"]["submitted"] == 1
     assert dashboard["recent_reports"][0]["reference_no"] == created["reference_no"]
+
+
+def test_coordinates_without_landmark_are_accepted(api: TestClient, db: Session, resident) -> None:
+    body = payload(
+        db,
+        landmark=None,
+        latitude="9.841200",
+        longitude="123.487300",
+        location_accuracy_m=12,
+        location_source="gps",
+    )
+    response = api.post("/api/v1/me/reports", json=body, headers=headers(api))
+    assert response.status_code == 201
+    report = db.scalar(select(Report).where(Report.reference_no == response.json()["reference_no"]))
+    assert (float(report.latitude), float(report.longitude)) == (9.8412, 123.4873)
+    assert report.location_source.value == "gps"
+    assert report.location_accuracy_m == 12

@@ -93,7 +93,9 @@ describe('step 2: incident details', () => {
     await userEvent.type(screen.getByLabelText('What happened?'), 'Rocks blocked the road.');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/report/new/location'));
-    expect(screen.getByText('Coming in Phase 6')).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Where did it happen?' }),
+    ).toBeTruthy();
   });
 
   it('goes back to the hazard step keeping the selection', async () => {

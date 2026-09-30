@@ -3,11 +3,13 @@
  * The server re-checks everything; these give residents instant feedback.
  */
 import { OTHER_HAZARD_CODE } from './hazards';
+import { inServiceArea } from './location';
 
 export const DESCRIPTION_MIN = 10;
 export const DESCRIPTION_MAX = 2000;
 export const OTHER_HAZARD_MIN = 3;
 export const OTHER_HAZARD_MAX = 120;
+export const LANDMARK_MIN = 3;
 export const LANDMARK_MAX = 200;
 export const MAX_INCIDENT_AGE_DAYS = 365;
 const CLOCK_SKEW_MINUTES = 5;
@@ -110,4 +112,29 @@ export function validateDetailsStep(
 /** Earliest date a resident may pick for an incident. */
 export function earliestIncidentDate(now: Date = new Date()): string {
   return addDays(localNow(now).date, -MAX_INCIDENT_AGE_DAYS);
+}
+
+export interface LocationStepInput {
+  barangayId: number | null;
+  landmark: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export function validateLocationStep(
+  input: LocationStepInput,
+): FieldErrors<'barangay' | 'landmark' | 'map'> {
+  const errors: FieldErrors<'barangay' | 'landmark' | 'map'> = {};
+  if (!input.barangayId) errors.barangay = 'Select the barangay where the incident happened';
+  const hasPin = input.latitude !== null && input.longitude !== null;
+  if (hasPin && !inServiceArea(input.latitude!, input.longitude!)) {
+    errors.map = 'The pin appears to be outside Dalaguete. Move it to the incident location.';
+  }
+  const landmark = input.landmark.trim();
+  if (landmark.length > LANDMARK_MAX) {
+    errors.landmark = `Use at most ${LANDMARK_MAX} characters`;
+  } else if (!hasPin && landmark.length < LANDMARK_MIN) {
+    errors.landmark = 'Add a nearby landmark, or set the location on the map';
+  }
+  return errors;
 }
