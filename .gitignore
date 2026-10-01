@@ -23,3 +23,8 @@ backend/media/
 .DS_Store
 .idea/
 .vscode/
+
+# End-to-end test output
+backend/.e2e-media/
+e2e/test-results/
+e2e/playwright-report/

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     refresh_reuse_grace_seconds: int = 10
     max_failed_logins: int = 5
     lockout_minutes: int = 15
+    # Per-IP limits on login, registration and session refresh (see core/ratelimit.py).
+    rate_limits_enabled: bool = True
     # Secure cookies need HTTPS. Defaults to on in production (see validator).
     cookie_secure: bool | None = None
 

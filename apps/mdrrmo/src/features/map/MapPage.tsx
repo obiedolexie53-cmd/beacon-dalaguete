@@ -32,6 +32,7 @@ import {
 } from '../reports/ReportFilters';
 import { ImportedBadge } from '../reports/ImportedBadge';
 import { DisasterMap } from './DisasterMap';
+import { TableScroll } from '../TableScroll';
 
 export function MapPage() {
   const filters = useReportFilters();
@@ -228,7 +229,7 @@ function MapList({
           No reports match these filters.
         </p>
       ) : (
-        <div className="m-table-wrap">
+        <TableScroll label="Reports shown on the map">
           <table className="m-table">
             <caption className="bcn-visually-hidden">Reports shown on the map</caption>
             <thead>
@@ -279,7 +280,7 @@ function MapList({
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
     </Card>
   );

@@ -36,6 +36,10 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "S"]
 ignore = ["S101"]  # assert is fine in tests
 
+[tool.ruff.lint.per-file-ignores]
+# Tests run ffmpeg/ffprobe with fixed arguments to build and inspect sample videos.
+"tests/**" = ["S603", "S607"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["db: requires a running PostgreSQL database (BEACON_DATABASE_URL)"]

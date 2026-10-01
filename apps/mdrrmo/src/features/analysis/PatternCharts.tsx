@@ -5,6 +5,7 @@ import { Button, Card, HazardIcon, SelectField, Skeleton } from '@beacon/ui';
 import { HighlightTable } from './viz/HighlightTable';
 import { HotspotMap } from './viz/HotspotMap';
 import { TrendChart, monthLabel, type TrendSeries } from './viz/TrendChart';
+import { TableScroll } from '../TableScroll';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES = [
@@ -253,7 +254,7 @@ function TrendSection({ data }: { data: PatternAnalysis }) {
         {showTable ? 'Hide data table' : 'Show data table'}
       </Button>
       {showTable && (
-        <div className="m-table-wrap">
+        <TableScroll label={`Records per month, ${name}`}>
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Records per month, {name}</caption>
             <thead>
@@ -281,7 +282,7 @@ function TrendSection({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
     </Card>
   );

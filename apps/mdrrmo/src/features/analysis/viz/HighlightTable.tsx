@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { HEAT_STEPS, heatLegend, heatStep } from './scale';
+import { TableScroll } from '../../TableScroll';
 
 export interface HeatAxis {
   key: string;
@@ -43,7 +44,7 @@ export function HighlightTable({
   return (
     <div className="bcn-stack" style={{ gap: 'var(--bcn-space-3)' }}>
       <HeatLegend max={max} markDescription={markDescription} />
-      <div className="m-table-wrap">
+      <TableScroll label={caption}>
         <table className="m-heat">
           <caption className="bcn-visually-hidden">{caption}</caption>
           <thead>
@@ -112,7 +113,7 @@ export function HighlightTable({
             </tr>
           </tfoot>
         </table>
-      </div>
+      </TableScroll>
     </div>
   );
 }

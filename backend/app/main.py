@@ -7,6 +7,7 @@ from app import __version__
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
+from app.core.headers import SecurityHeadersMiddleware
 
 
 def create_app() -> FastAPI:
@@ -30,6 +31,8 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
+    # Added last so it wraps everything, including CORS and error responses.
+    app.add_middleware(SecurityHeadersMiddleware, hsts=settings.environment == "production")
     register_error_handlers(app)
     app.include_router(api_router)
     return app

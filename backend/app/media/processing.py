@@ -77,7 +77,7 @@ def process_photo(data: bytes) -> ProcessedMedia:
 
 
 def process_video(data: bytes) -> ProcessedMedia:
-    """Identify the container. Videos are stored as uploaded (see docs: metadata note)."""
+    """Identify the container from its first bytes (metadata is removed in media.video)."""
     if data.startswith(b"\x1a\x45\xdf\xa3"):
         return ProcessedMedia(MediaKind.VIDEO, data, "video/webm", "webm")
     if data[4:8] == b"ftyp":

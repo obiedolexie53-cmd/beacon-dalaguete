@@ -15,7 +15,7 @@ all decisions remain with MDRRMO personnel.
 
 ## Status
 
-Phases 1–14 complete: project structure, design system and navigation,
+All 15 phases complete: project structure, design system and navigation,
 resident/staff authentication, the resident dashboard, the complete reporting
 flow (hazard type, incident details, location with GPS and map, photo/video
 evidence, review and submission), report details with status history, in-app
@@ -24,10 +24,15 @@ verification, the disaster map, and historical reports: importing past MDRRMO
 records, Incident Data Analysis (4.1) and CSV export, and ML-assisted Hazard
 Pattern Identification (4.2): recurring locations, DBSCAN hotspots, seasonal
 patterns, trends and hazards recorded together, with Pattern Visualization
-(4.3): a hotspot map, heatmap tables and a trend chart.
+(4.3): a hotspot map, heatmap tables and a trend chart. Phase 15 added
+end-to-end and accessibility tests, a security review (per-IP rate limits,
+video metadata removal, security headers, an access-control test over every
+API route) and a usability evaluation plan.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the approved architecture
 and phase plan, and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for
-the design system.
+the design system, [`docs/SECURITY.md`](docs/SECURITY.md) for security
+controls and the deployment checklist, and [`docs/TESTING.md`](docs/TESTING.md)
+for the tests and usability evaluation plan.
 
 ## Repository layout
 
@@ -39,11 +44,13 @@ the design system.
 | `packages/ui`        | Design system: tokens, styles, React components              |
 | `packages/auth`      | Shared React sign-in state (AuthProvider, useAuth)           |
 | `backend`            | FastAPI API, Alembic migrations, seed data, tests            |
+| `e2e`                | End-to-end and accessibility tests (Playwright + axe-core)   |
 | `docker-compose.yml` | PostgreSQL + PostGIS (and optionally the API) for local dev  |
 
 ## Development
 
-Requirements: Node.js 22+, pnpm 10, Python 3.11+, [uv](https://docs.astral.sh/uv/), Docker.
+Requirements: Node.js 22+, pnpm 10, Python 3.11+, [uv](https://docs.astral.sh/uv/), Docker,
+and ffmpeg (removes location metadata from uploaded videos).
 
 ```bash
 # 1. Database (PostgreSQL 16 + PostGIS)
@@ -112,6 +119,7 @@ uv run python -m app.cli delete-import <batch id>   # undo an import
 ```bash
 pnpm lint && pnpm typecheck && pnpm test && pnpm build   # front end
 cd backend && uv run ruff check . && uv run pytest        # back end
+pnpm test:e2e     # end-to-end + accessibility (Playwright; needs PostgreSQL)
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same checks, including migrations

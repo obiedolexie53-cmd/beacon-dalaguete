@@ -1,5 +1,7 @@
 import hashlib
 import io
+import json
+import subprocess
 import time
 from urllib.parse import parse_qs, urlparse
 
@@ -11,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.media import service as media_service
+from app.media import video
 from app.media.signing import signed_media_url
 from app.models import AuditLog, ReportMedia, UserRole
 from app.reports.workflow import ReportStatus
@@ -125,16 +128,107 @@ def test_decompression_bombs_are_rejected(
 
 # ---------- Videos ----------
 
+LOCATION = "+09.8412+123.4873/"
 
+
+def make_video(tmp_path, extension: str) -> bytes:
+    """A one-second test clip carrying the kind of metadata phones record."""
+    codec = ["-c:v", "libvpx", "-c:a", "libvorbis"] if extension == "webm" else ["-c:v", "mpeg4"]
+    out = tmp_path / f"source.{extension}"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=64x48:rate=5:duration=1",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=duration=1",
+            *codec,
+            "-metadata",
+            f"location={LOCATION}",
+            "-metadata",
+            "comment=Recorded on a PhoneMaker X1",
+            "-metadata",
+            "creation_time=2026-09-28T08:35:00Z",
+            "-metadata:s:v:0",
+            "handler_name=PhoneMaker Camera",
+            *([] if extension == "webm" else ["-movflags", "use_metadata_tags"]),
+            str(out),
+        ],
+        check=True,
+    )
+    return out.read_bytes()
+
+
+def probe(path) -> str:
+    return subprocess.run(
+        ["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)],
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout
+
+
+needs_ffmpeg = pytest.mark.skipif(not video.tools_available(), reason="ffmpeg is not installed")
+
+
+@needs_ffmpeg
 @pytest.mark.parametrize(
-    ("data", "mime"),
-    [(MP4, "video/mp4"), (MOV, "video/quicktime"), (WEBM, "video/webm")],
+    ("extension", "mime"),
+    [("mp4", "video/mp4"), ("mov", "video/quicktime"), ("webm", "video/webm")],
 )
-def test_videos_are_accepted(api: TestClient, report, data: bytes, mime: str) -> None:
-    response = upload(api, report.reference_no, data, auth(api), "clip.bin")
+def test_videos_are_stored_without_metadata(
+    api: TestClient, db: Session, report, media_root, tmp_path, extension: str, mime: str
+) -> None:
+    data = make_video(tmp_path, extension)
+    assert "123.4873" in probe(tmp_path / f"source.{extension}")  # the tag really is there
+    response = upload(api, report.reference_no, data, auth(api), f"clip.{extension}")
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["mime_type"] == mime
+    assert (body["width"], body["height"]) == (64, 48)
+    stored = media_root / db.scalar(select(ReportMedia.storage_key))
+    info = json.loads(probe(stored))
+    tags = [info["format"].get("tags", {})] + [st.get("tags", {}) for st in info["streams"]]
+    for tag_set in tags:
+        assert not {"location", "comment", "creation_time"} & {k.lower() for k in tag_set}
+        assert not any("PhoneMaker" in str(v) or "123.4873" in str(v) for v in tag_set.values())
+    raw = stored.read_bytes()
+    assert b"123.4873" not in raw and b"PhoneMaker" not in raw
+    assert {st["codec_type"] for st in info["streams"]} == {"video", "audio"}
+    assert body["size_bytes"] == stored.stat().st_size
+
+
+@needs_ffmpeg
+def test_files_that_only_look_like_videos_are_rejected(api: TestClient, report) -> None:
+    response = upload(api, report.reference_no, MP4, auth(api))
+    assert response.status_code == 415
+    assert "could not be read" in response.json()["error"]["message"]
+
+
+def test_without_ffmpeg_production_refuses_videos(
+    api: TestClient, report, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(video, "tools_available", lambda: False)
+    monkeypatch.setattr(get_settings(), "environment", "production")
+    response = upload(api, report.reference_no, MP4, auth(api))
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "video_unavailable"
+
+
+def test_without_ffmpeg_development_keeps_the_file(
+    api: TestClient, report, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(video, "tools_available", lambda: False)
+    response = upload(api, report.reference_no, MOV, auth(api))
     assert response.status_code == 201
-    assert response.json()["mime_type"] == mime
-    assert response.json()["size_bytes"] == len(data)
+    assert response.json()["size_bytes"] == len(MOV)
 
 
 def test_large_videos_are_rejected(
@@ -149,16 +243,16 @@ def test_large_videos_are_rejected(
 # ---------- Limits and access ----------
 
 
-def test_photo_limit_per_report(api: TestClient, report) -> None:
+def test_photo_limit_per_report(api: TestClient, report, monkeypatch: pytest.MonkeyPatch) -> None:
     headers = auth(api)
     for _ in range(5):
         assert upload(api, report.reference_no, jpeg_with_gps(), headers).status_code == 201
     sixth = upload(api, report.reference_no, jpeg_with_gps(), headers)
     assert sixth.status_code == 409
     assert sixth.json()["error"]["code"] == "too_many_files"
-    assert (
-        upload(api, report.reference_no, MP4, headers).status_code == 201
-    )  # videos counted separately
+    # Videos are counted separately.
+    monkeypatch.setattr(video, "tools_available", lambda: False)
+    assert upload(api, report.reference_no, MP4, headers).status_code == 201
 
 
 def test_cannot_add_evidence_to_someone_elses_report(api: TestClient, db: Session, report) -> None:

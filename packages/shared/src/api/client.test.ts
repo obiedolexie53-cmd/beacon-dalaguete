@@ -127,4 +127,22 @@ describe('ApiClient', () => {
     expect(await file.blob.text()).toBe('a,b\n1,2\n');
     await expect(client.download('/other')).rejects.toMatchObject({ code: 'forbidden' });
   });
+
+  it('keeps the session when a refresh is rate-limited', async () => {
+    let limited = false;
+    const { client } = makeClient((url) => {
+      if (url.endsWith('/login')) return json(200, session('tok-1'));
+      if (url.endsWith('/refresh'))
+        return limited
+          ? json(429, { error: { code: 'too_many_requests', message: 'Too many attempts' } })
+          : json(200, session('tok-2'));
+      return json(401, {});
+    });
+    const seen: Array<SessionResponse | null> = [];
+    client.onSessionChange((s) => seen.push(s));
+    await client.login('leona@example.com', 'secret');
+    limited = true;
+    await expect(client.refresh()).rejects.toMatchObject({ status: 429 });
+    expect(seen.at(-1)).not.toBeNull();
+  });
 });

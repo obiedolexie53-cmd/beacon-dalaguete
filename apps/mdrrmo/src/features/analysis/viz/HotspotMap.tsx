@@ -5,6 +5,12 @@ import { DALAGUETE_DEMO_CENTER, OSM_TILES, type PatternAnalysis } from '@beacon/
 
 type Hotspot = PatternAnalysis['hotspots'][number];
 
+function textElement(text: string): HTMLElement {
+  const span = document.createElement('span');
+  span.textContent = text;
+  return span;
+}
+
 /** Hotspots never draw smaller than this, so a tight cluster stays visible. */
 const MIN_RADIUS_M = 120;
 
@@ -68,7 +74,8 @@ export function HotspotMap({
         radius: Math.max(MIN_RADIUS_M, h.radius_m),
         ...STYLE.normal,
       })
-        .bindTooltip(`${h.id} · ${h.hazard.name} · ${h.count}`, {
+        // Leaflet inserts string tooltips as HTML; a text node keeps names as plain text.
+        .bindTooltip(textElement(`${h.id} · ${h.hazard.name} · ${h.count}`), {
           permanent: true,
           direction: 'center',
           className: 'm-hotspot-label',
@@ -101,7 +108,7 @@ export function HotspotMap({
     <div
       ref={containerRef}
       className="m-hotspot-map"
-      role="img"
+      role="region"
       aria-label={`Map of ${hotspots.length} hotspots. The same hotspots are listed beside the map.`}
     />
   );

@@ -1,7 +1,9 @@
 """Attaching evidence to a resident's report."""
 
 import hashlib
+import logging
 import uuid
+from pathlib import Path
 from typing import BinaryIO
 
 from fastapi import status
@@ -9,7 +11,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.audit.service import record
+from app.core.config import get_settings
 from app.core.errors import ApiError
+from app.media import video
 from app.media.limits import (
     MAX_PHOTO_BYTES,
     MAX_PHOTOS_PER_REPORT,
@@ -20,6 +24,8 @@ from app.media.processing import InvalidMediaError, detect_kind, process_photo, 
 from app.media.storage import LocalMediaStorage
 from app.models import MediaKind, Report, ReportMedia, User
 from app.reports.workflow import ReportStatus
+
+logger = logging.getLogger(__name__)
 
 # Evidence can be added until MDRRMO personnel have verified or resolved the report.
 OPEN_FOR_EVIDENCE = frozenset(
@@ -118,13 +124,15 @@ def add_evidence(
 
     media_id = uuid.uuid4()
     key = f"reports/{report.id}/{media_id}.{processed.extension}"
+    width, height = processed.width, processed.height
     if kind is MediaKind.PHOTO:
         storage.save(key, processed.data)
         sha256 = hashlib.sha256(processed.data).hexdigest()
         stored_size = len(processed.data)
     else:
-        sha256 = storage.save_stream(key, upload)
-        stored_size = size
+        sha256, stored_size, width, height = _store_video(
+            storage, key, upload, processed.extension, size
+        )
 
     media = ReportMedia(
         id=media_id,
@@ -134,8 +142,8 @@ def add_evidence(
         storage_key=key,
         mime_type=processed.mime_type,
         size_bytes=stored_size,
-        width=processed.width,
-        height=processed.height,
+        width=width,
+        height=height,
         sha256=sha256,
     )
     db.add(media)
@@ -155,3 +163,32 @@ def add_evidence(
         raise
     db.refresh(media)
     return media
+
+
+VIDEO_UNAVAILABLE = ApiError(
+    status.HTTP_503_SERVICE_UNAVAILABLE,
+    "video_unavailable",
+    "Videos cannot be added right now. Add photos instead, or try again later.",
+)
+
+
+def _store_video(
+    storage: LocalMediaStorage, key: str, upload: BinaryIO, extension: str, size: int
+) -> tuple[str, int, int | None, int | None]:
+    """Store a video with its metadata (including location) removed."""
+    if not video.tools_available():
+        if get_settings().environment == "production":
+            raise VIDEO_UNAVAILABLE
+        # Development without ffmpeg: keep the file as uploaded.
+        logger.warning("ffmpeg not found; storing video %s without removing metadata", key)
+        return storage.save_stream(key, upload), size, None, None
+    with video.temporary_workdir() as workdir:
+        try:
+            clean = video.clean_video(upload, extension, Path(workdir))
+        except InvalidMediaError as exc:
+            raise ApiError(
+                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_media", str(exc)
+            ) from exc
+        with clean.path.open("rb") as cleaned:
+            sha256 = storage.save_stream(key, cleaned)
+        return sha256, clean.path.stat().st_size, clean.width, clean.height

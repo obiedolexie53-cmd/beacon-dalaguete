@@ -33,6 +33,7 @@ import {
 import { DemoToggle, useReportFilters, type ReportFilterState } from '../reports/ReportFilters';
 import { HISTORY_FILTER_KEYS, HistoryFilterFields } from '../history/HistoryFilters';
 import { PatternCharts } from './PatternCharts';
+import { TableScroll } from '../TableScroll';
 
 export const ANALYSIS_DISCLAIMER =
   'This analysis identifies recurring patterns in recorded disaster reports. It does not ' +
@@ -326,7 +327,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
           data.recurring_locations.length === 0 ? 'No recurring locations met the settings.' : null
         }
       >
-        <div className="m-table-wrap">
+        <TableScroll label="Recurring hazard locations">
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Recurring hazard locations</caption>
             <thead>
@@ -363,7 +364,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </Section>
 
       <Section
@@ -372,7 +373,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
         intro={`Groups of at least ${settings.hotspot_min_records} records of the same hazard type within ${settings.hotspot_distance_m.toLocaleString('en-PH')} m of each other (DBSCAN clustering on map pins). Records without a map pin are not included.`}
         empty={data.hotspots.length === 0 ? 'No hotspots met the settings.' : null}
       >
-        <div className="m-table-wrap">
+        <TableScroll label="Hotspots">
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Hotspots</caption>
             <thead>
@@ -423,7 +424,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </Section>
 
       <Section
@@ -432,7 +433,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
         intro="Records per month of the year for each hazard type, compared with an even spread (chi-square test, allowing for how often each month occurs in the period). Highlighted months had clearly more records."
         empty={data.seasonality.length === 0 ? 'No records.' : null}
       >
-        <div className="m-table-wrap">
+        <TableScroll label="Seasonal patterns">
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Seasonal patterns</caption>
             <thead>
@@ -472,7 +473,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </Section>
 
       <Section
@@ -481,7 +482,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
         intro="Whether the number of records per month rose or fell over the period (Mann-Kendall test; change per year from Sen's slope). A change can also come from changes in how incidents were reported. At least 12 months and 10 records are needed."
         empty={null}
       >
-        <div className="m-table-wrap">
+        <TableScroll label="Trends over time">
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Trends over time</caption>
             <thead>
@@ -526,7 +527,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </Section>
 
       <Section
@@ -539,7 +540,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
             : null
         }
       >
-        <div className="m-table-wrap">
+        <TableScroll label="Hazards recorded together">
           <table className="m-table m-table--compact">
             <caption className="bcn-visually-hidden">Hazards recorded together</caption>
             <thead>
@@ -569,7 +570,7 @@ function PatternResults({ data }: { data: PatternAnalysis }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
         {data.co_occurrence.length > PAIRS_SHOWN && (
           <Button
             variant="ghost"

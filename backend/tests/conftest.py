@@ -21,7 +21,15 @@ if HAS_DB:
     os.environ["BEACON_DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 
 from app.core.db import get_db, get_engine  # noqa: E402
+from app.core.ratelimit import limiter  # noqa: E402
 from app.main import create_app  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits() -> Iterator[None]:
+    limiter.reset()
+    yield
+    limiter.reset()
 
 
 @pytest.fixture(scope="session", autouse=True)

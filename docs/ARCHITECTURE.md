@@ -584,7 +584,7 @@ MDRRMO assessment.
 | 12  | Historical report analysis          | record import, DEMO history, 4.1 aggregations, CSV export                   |
 | 13  | ML-assisted pattern analysis        | 4.2 recurrence, DBSCAN hotspots, seasonality, trends, co-occurrence + tests |
 | 14  | Pattern visualization               | 4.3 hotspot map, heatmap tables, trend chart                                |
-| 15  | Testing, security review, usability | E2E tests, access-control tests, accessibility, error/empty states          |
+| 15  | Testing, security review, usability | E2E + axe tests, access matrix, rate limits, video metadata, security docs  |
 
 Error and empty states (offline, failed submission, missing fields, location
 denied, no reports, failed upload, session expired) are built alongside each

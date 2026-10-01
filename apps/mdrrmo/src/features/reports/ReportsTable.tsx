@@ -7,11 +7,12 @@ import {
 } from '@beacon/shared';
 import { DemoBadge, HazardIcon, StatusBadge } from '@beacon/ui';
 import { ImportedBadge } from './ImportedBadge';
+import { TableScroll } from '../TableScroll';
 
 /** Report rows used on the dashboard and the Reports page. */
 export function ReportsTable({ rows, caption }: { rows: StaffReportRow[]; caption: string }) {
   return (
-    <div className="m-table-wrap">
+    <TableScroll label={caption}>
       <table className="m-table">
         <caption className="bcn-visually-hidden">{caption}</caption>
         <thead>
@@ -62,6 +63,6 @@ export function ReportsTable({ rows, caption }: { rows: StaffReportRow[]; captio
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScroll>
   );
 }

@@ -1133,3 +1133,10 @@
   font-size: var(--bcn-text-sm);
   font-variant-numeric: tabular-nums;
 }
+
+/* Wide tables that scroll sideways are focusable (see TableScroll). */
+.m-table-wrap:focus-visible {
+  outline: none;
+  box-shadow: var(--bcn-focus-ring);
+  border-radius: var(--bcn-radius-sm);
+}

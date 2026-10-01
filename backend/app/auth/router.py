@@ -8,7 +8,7 @@ auth path, so page scripts can never read it. The short-lived access token is
 returned in the body and kept in memory by the client.
 """
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 
 from app.auth.deps import CurrentResident, CurrentStaff, DbSession, client_ip
 from app.auth.schemas import LoginRequest, RegisterRequest, SessionResponse, UserOut
@@ -23,6 +23,7 @@ from app.auth.service import (
 )
 from app.core.config import get_settings
 from app.core.errors import ApiError, error_response
+from app.core.ratelimit import LOGIN, REFRESH, REGISTER, rate_limit
 from app.core.security import Audience
 
 RESIDENT_COOKIE = ("beacon_rt", "/api/v1/auth")
@@ -62,14 +63,18 @@ def _session_body(session: IssuedSession) -> SessionResponse:
 def _build_router(audience: Audience, cookie: tuple[str, str]) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/login", response_model=SessionResponse)
+    @router.post(
+        "/login", response_model=SessionResponse, dependencies=[Depends(rate_limit(LOGIN))]
+    )
     def login(body: LoginRequest, request: Request, response: Response, db: DbSession):
         user = authenticate(db, body.identifier, body.password, audience, client_ip(request))
         session = issue_session(db, user, audience, request.headers.get("user-agent"))
         _set_refresh_cookie(response, cookie, session)
         return _session_body(session)
 
-    @router.post("/refresh", response_model=SessionResponse)
+    @router.post(
+        "/refresh", response_model=SessionResponse, dependencies=[Depends(rate_limit(REFRESH))]
+    )
     def refresh(request: Request, response: Response, db: DbSession):
         try:
             session = rotate_session(
@@ -101,7 +106,10 @@ staff_auth_router = _build_router("staff", STAFF_COOKIE)
 
 
 @resident_auth_router.post(
-    "/register", response_model=SessionResponse, status_code=status.HTTP_201_CREATED
+    "/register",
+    response_model=SessionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit(REGISTER))],
 )
 def register(body: RegisterRequest, request: Request, response: Response, db: DbSession):
     user = register_resident(db, body, client_ip(request))

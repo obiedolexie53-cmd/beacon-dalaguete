@@ -7,6 +7,7 @@ import { ANALYSIS_DISCLAIMER } from '../analysis/AnalysisPage';
 import { DemoToggle, useReportFilters } from '../reports/ReportFilters';
 import { HISTORY_FILTER_KEYS, HistoryFilterFields } from './HistoryFilters';
 import { ColumnChart, ShareBar, StatTile, formatShare, type Column } from './charts';
+import { TableScroll } from '../TableScroll';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES = [
@@ -270,7 +271,7 @@ function AnalysisResults({ data }: { data: IncidentAnalysis }) {
 
       <div className="m-history-grid">
         <Card title="Records by hazard type">
-          <div className="m-table-wrap">
+          <TableScroll label="Records by hazard type">
             <table className="m-table m-table--compact">
               <caption className="bcn-visually-hidden">Records by hazard type</caption>
               <thead>
@@ -299,7 +300,7 @@ function AnalysisResults({ data }: { data: IncidentAnalysis }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
         </Card>
         <BarangayTable data={data} hazardNames={hazardNames} />
       </div>
@@ -375,7 +376,7 @@ function BarangayTable({
   const max = data.by_barangay[0]?.share ?? 0;
   return (
     <Card title="Records by barangay">
-      <div className="m-table-wrap">
+      <TableScroll label="Records by barangay">
         <table className="m-table m-table--compact">
           <caption className="bcn-visually-hidden">Records by barangay</caption>
           <thead>
@@ -404,7 +405,7 @@ function BarangayTable({
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       {data.by_barangay.length > BARANGAYS_SHOWN && (
         <Button
           variant="ghost"

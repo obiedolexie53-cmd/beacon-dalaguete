@@ -9,7 +9,8 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
-    proxy: { '/api': 'http://localhost:8000' },
+    // BEACON_API_URL lets the end-to-end tests point at their own API server.
+    proxy: { '/api': process.env.BEACON_API_URL ?? 'http://localhost:8000' },
   },
   test: {
     environment: 'jsdom',

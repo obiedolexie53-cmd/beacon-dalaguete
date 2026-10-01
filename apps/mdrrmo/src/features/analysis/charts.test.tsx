@@ -76,3 +76,32 @@ describe('pattern visualization', () => {
     expect(within(table).getByRole('row', { name: 'September 2026 20 14' })).toBeTruthy();
   });
 });
+
+describe('hotspot labels', () => {
+  it('shows hazard names as text, never as HTML', async () => {
+    const { makePatterns, json: toJson } = await import('../../test/renderApp');
+    const base = makePatterns();
+    renderApp(
+      '/analysis?view=charts',
+      signedInWith({
+        '/staff/analysis/patterns?include_demo=true': () =>
+          toJson(
+            200,
+            makePatterns({
+              hotspots: [
+                {
+                  ...base.hotspots[0]!,
+                  hazard: { code: 'other', name: '<img src=x onerror=alert(1)>' },
+                },
+              ],
+            }),
+          ),
+      }),
+    );
+    await screen.findByRole('heading', { name: 'Hotspot map' });
+    await waitFor(() => expect(document.querySelector('.m-hotspot-label')).not.toBeNull());
+    const label = document.querySelector('.m-hotspot-label')!;
+    expect(label.querySelector('img')).toBeNull();
+    expect(label.textContent).toContain('<img src=x onerror=alert(1)>');
+  });
+});

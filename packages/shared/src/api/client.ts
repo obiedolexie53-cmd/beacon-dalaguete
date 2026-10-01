@@ -134,7 +134,9 @@ export class ApiClient {
         await new Promise((resolve) => setTimeout(resolve, RACE_RETRY_DELAY_MS));
         return this.doRefresh(false);
       }
-      if (error instanceof ApiError && error.isNetworkError) throw error;
+      // Offline or rate-limited: the session may still be valid, so keep it and let
+      // the caller show the error instead of signing the user out.
+      if (error instanceof ApiError && (error.isNetworkError || error.status === 429)) throw error;
       this.setSession(null);
       return null;
     }
