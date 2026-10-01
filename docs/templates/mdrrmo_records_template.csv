@@ -1,0 +1,4 @@
+date,time,hazard,other_hazard,barangay,description,landmark,latitude,longitude,status,external_ref
+2025-09-28,16:35,Landslide,,Mantalongon,EXAMPLE ROW - replace: Soil and rocks slid onto the barangay road after continuous rain.,Near the vegetable trading post,9.781200,123.476500,Resolved,MDRRMO-2025-0142
+09/30/2025,,Flood,,Poblacion,EXAMPLE ROW - replace: Knee-deep floodwater on the national highway.,,,,Verified,
+2025-10-02,4:10 PM,Other Hazard,Sinkhole,Casay,EXAMPLE ROW - replace: Sinkhole beside the barangay road.,,,,,

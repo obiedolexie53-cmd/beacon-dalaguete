@@ -1,0 +1,45 @@
+[project]
+name = "beacon-api"
+version = "0.1.0"
+description = "BEACON API: community disaster reporting and monitoring for Dalaguete, Cebu (research prototype)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "pydantic-settings>=2.4",
+    "argon2-cffi>=25.1.0",
+    "pyjwt>=2.15.1",
+    "email-validator>=2.3.0",
+    "pillow>=11",
+    "python-multipart>=0.0.32",
+    "scikit-learn>=1.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx2>=2.13",
+    "ruff>=0.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]  # assert is fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+# Tests run ffmpeg/ffprobe with fixed arguments to build and inspect sample videos.
+"tests/**" = ["S603", "S607"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: requires a running PostgreSQL database (BEACON_DATABASE_URL)"]
